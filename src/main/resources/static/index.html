@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+	<meta charset="utf-8">
+	<title></title>
+	<style>
+		body,
+		html {
+			margin: 0;
+			padding: 0;
+			font-family: Arial, sans-serif;
+			height: 100%;
+			overflow: hidden;
+			/* 防止滚动条 */
+		}
+
+		.form-container {
+			max-width: 400px;
+			margin: 50px auto;
+			padding: 20px;
+			box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+			border-radius: 8px;
+			background-color: rgba(255, 255, 255, 0.2);
+			/* 半透明白色背景 */
+		}
+
+		/* 输入框和时间选择框的样式 */
+		.form-input {
+			width: calc(100% - 82px);
+			/* 减去padding */
+			padding: 10px;
+			margin: 10px 0;
+			border: 1px solid #ccc;
+			border-radius: 4px;
+			box-sizing: border-box;
+			/* 让padding不影响宽度 */
+			transition: all 0.3s ease;
+		}
+
+		.form-input:focus {
+			border-color: #007bff;
+			outline: none;
+			box-shadow: 0 0 5px rgba(0, 123, 255, 0.5);
+		}
+
+		/* 提交按钮样式 */
+		button[type="submit"] {
+			background-color: #007bff;
+			color: white;
+		}
+
+		button {
+
+			padding: 10px 20px;
+			border: none;
+			border-radius: 4px;
+			cursor: pointer;
+			transition: background-color 0.3s ease;
+		}
+
+		button[type="submit"]:hover {
+			background-color: #0056b3;
+		}
+
+		.btnView {
+			display: flex;
+			justify-content: space-around;
+			width: calc(100% - 22px);
+			padding: 12px 20px;
+		}
+
+
+
+		.flex {
+			display: flex;
+			align-items: center;
+			flex: 1;
+		}
+
+		label {
+			width: 60px;
+			font-size: 14px;
+			margin-right: 5px;
+			text-align: right;
+		}
+
+		/* 自定义下拉框样式 */
+		.custom-select {
+			width: 118px;
+			/* 根据需要调整宽度 */
+			padding: 8px;
+			font-size: 16px;
+			line-height: 1;
+			border: 1px solid #ccc;
+			/* 边框颜色 */
+			border-radius: 4px;
+			/* 边框圆角 */
+			outline: none;
+			/* 移除焦点轮廓 */
+			background-color: white;
+			/* 背景色 */
+			appearance: none;
+			/* 移除默认的下拉箭头（在大多数现代浏览器中有效） */
+			-webkit-appearance: none;
+			/* 针对Safari和Chrome */
+			background-image: url('data:image/svg+xml;utf8,<svg fill="black" height="24" viewBox="0 0 24 24" width="24" xmlns="http://www.w3.org/2000/svg"><path d="M7 10l5 5 5-5z"/><path d="M0 0h24v24H0z" fill="none"/></svg>');
+			/* 使用SVG作为自定义下拉箭头，你可以替换为其他图标 */
+			background-repeat: no-repeat;
+			background-position: right 10px center;
+			/* 调整箭头位置 */
+		}
+
+		/* 可选：当鼠标悬停在下拉框上时改变边框颜色 */
+		.custom-select:hover {
+			border-color: #888;
+		}
+
+		.content {
+			font-weight: 600;
+			text-align: center;
+			padding: 50px;
+			font-size: 20px
+		}
+	</style>
+</head>
+
+<body>
+	<div class="form-container">
+		<form id="myForm" action="">
+			<div class="flex">
+				<div class="flex">
+					<label for="type">服务商:</label>
+					<select id="type" name="type" class="custom-select">
+						<option value="ups">UPS</option>
+						<option value="fedex">FEDEX</option>
+					</select>
+				</div>
+				<div class="flex">
+					<label for="countryCode">国家:</label>
+					<select id="countryCode" name="countryCode" class="custom-select">
+						<option value="US">美国</option>
+					</select>
+				</div>
+			</div>
+
+
+			<div class="flex">
+				<div class="flex">
+					<label for="politicalDivision1">省州:</label>
+					<input type="text" id="politicalDivision1" name="politicalDivision1" class="form-input">
+				</div>
+				<div class="flex">
+					<label for="politicalDivision2">城市:</label>
+					<input type="text" id="politicalDivision2" name="politicalDivision2" class="form-input">
+				</div>
+			</div>
+			<div class="flex">
+				<label for="postcodePrimaryLow">邮编:</label>
+				<input type="text" id="postcodePrimaryLow" name="postcodePrimaryLow" class="form-input">
+			</div>
+			<div class="flex">
+				<label for="addressLine">地址:</label>
+				<textarea name="addressLine" id="addressLine" cols="42" rows="5" style="resize: none;"></textarea>
+			</div>
+			<div class="btnView">
+				<button type="submit">查询</button>
+				<button type="reset" onclick="resetForm()">重置</button>
+			</div>
+		</form>
+		<div style="margin: 10px 0;    font-size: 12px;">
+			最新燃油：
+			<span style="color:red;margin: 10px 0;">
+				UPS：<span class="ups_num">0</span> ；
+				FEDEX：<span class="fedex_num">0</span>；
+				DHL：<span class="dhl_num">0</span>
+			</span>
+
+		</div>
+		<div class="content">
+			未知/商业/住宅/混合
+		</div>
+	</div>
+	<script>
+
+
+		function add(a, b) {
+			const factor = 1000;
+			return (Math.round(a * factor) + Math.round(b * factor)) / factor;
+		}
+		function getfuel() {
+			let ups_num = document.querySelector(".ups_num")
+			let fedex_num = document.querySelector(".fedex_num")
+			let dhl_num = document.querySelector(".dhl_num")
+
+			fetch('/cityPost', {
+				headers: {
+					'Content-Type': 'application/x-www-form-urlencoded',
+					'Authorization': '2b0e58b5-c577-40c6-a63c-444081e6bd64'
+				},
+			})
+				.then(response => response.json())
+				.then(data => {
+					let { ups, dhl, fedex } = data.data
+					// if(){}
+					dhl_num.innerHTML = dhl.fuel
+					fedex_num.innerHTML = fedex.fuel
+					ups_num.innerHTML = ups.fuel
+				})
+				.catch(error => console.error('Error:', error));
+		}
+		getfuel()
+
+		document.getElementById("myForm").addEventListener('submit', function (event) {
+			console.log(event);
+			// 阻止表单的默认提交行为
+			event.preventDefault();
+
+			var formData = new FormData(this); // 创建FormData对象
+			let obj = {
+				"type": "",
+				"consigneeName": "",
+				"buildingName": "",
+				"addressLine": [],
+				"region": "",
+				"politicalDivision1": "",
+				"politicalDivision2": "",
+				"postcodePrimaryLow": "",
+				"postcodeExtendedLow": "",
+				"urbanization": "",
+				"countryCode": ""
+			}
+			for (var pair of formData.entries()) {
+				if (pair[0] == 'addressLine') {
+					obj[pair[0]] = [pair[1]]
+				} else {
+
+
+					obj[pair[0]] = pair[1]
+
+				}
+			}
+			let content = document.querySelector(".content")
+			const map = {
+				0: '未分类',
+				1: '商业',
+				2: '住宅',
+				3: '混合'
+			};
+			fetch('cityPost/checkHome', {
+				method: 'POST',
+				headers: {
+					'Content-Type': 'application/json',
+					'Authorization': '2b0e58b5-c577-40c6-a63c-444081e6bd64'
+				},
+				body: JSON.stringify(obj)
+			})
+				.then(response => response.json())
+				.then(data => {
+					let num = data.data
+					console.log(map[num],'------------------------------');
+					content.innerText =map[num]
+				})
+				.catch(error => console.error('Error:', error));
+		})
+
+		function resetForm() {
+			let content = document.querySelector(".content")
+			content.innerText = '未知/商业/住宅/混合'
+			document.getElementById("myForm").reset();
+			
+		}
+	</script>
+</body>
+
+</html>

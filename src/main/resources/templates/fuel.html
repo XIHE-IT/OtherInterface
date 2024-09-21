@@ -1,0 +1,284 @@
+<html lang="" data-dpr="1" style="font-size: 54px;">
+
+	<head>
+		<meta charset="utf-8">
+
+		<meta http-equiv="X-UA-Compatible" content="IE=edge">
+		<meta name="viewport" content="width=device-width,initial-scale=1">
+		<meta name="viewport"
+			content="width=device-width,initial-scale=1,minimum-scale=1,maximum-scale=1,viewport-fit=cover,user-scalable=no">
+		<meta http-equiv="Pragma" content="no-cache">
+		<link rel="icon" href="/share.png">
+		<title>实时燃油费率</title>
+		<script src="/static/js/flexible.js"></script>
+		<script defer="defer" src="/static/js/chunk-vendors.5bc001be.js"></script>
+		<script defer="defer" src="/static/js/app.37289539.js"></script>
+		<link href="/static/css/chunk-vendors.78fa2343.css" rel="stylesheet">
+		<link href="/static/css/app.5c42a060.css" rel="stylesheet">
+		<link rel="stylesheet" type="text/css" href="/static/css/164.ae3bf658.css">
+
+	</head>
+
+	<body style="font-size: 12px;" class=""><noscript><strong>We're sorry but fueloil doesn't work properly without
+				JavaScript enabled. Please enable it to continue.</strong></noscript>
+		<div id="app" data-v-app="">
+			<div id="app">
+				<div class="single-page" data-v-69d1d601="">
+					<div class="banner-wrap" data-v-69d1d601="">
+						<p class="banner-title" data-v-69d1d601="">品客国际物流</p>
+						<p data-v-69d1d601="">带你了解国际物流最新资讯</p>
+						<p style="text-align:left;" data-v-69d1d601="">品客跨境物流系统，助力跨境物流企业发展！关注品客公众号，随时随地掌握各国、各渠道燃油最新变动情况！
+						</p>
+						<div class="banner-qrCode" data-v-69d1d601="">
+							<div class="banner-qrCode-img" data-v-69d1d601=""><img
+									src="/static/img/qrCode.9d66ccad.png" alt="qrCode" data-v-69d1d601=""></div>
+						</div>
+					</div>
+					<div id="view-total"></div>
+				</div>
+			</div>
+		</div>
+		<div data-v-app=""></div>
+		<!---->
+		<div role="dialog" tabindex="0"
+			class="van-popup van-popup--center van-toast van-toast--middle van-toast--loading"
+			style="z-index: 2001; display: none;">
+			<div class="van-loading van-loading--circular van-toast__loading" aria-live="polite" aria-busy="true"><span
+					class="van-loading__spinner van-loading__spinner--circular"><svg class="van-loading__circular"
+						viewBox="25 25 50 50">
+						<circle cx="50" cy="50" r="20" fill="none"></circle>
+					</svg></span>
+				<!---->
+			</div>
+			<!---->
+			<!---->
+		</div>
+		
+		<script>
+			fetch("/cityPost", {
+				"headers": {
+					"Content-Type": "application/json",
+					"Authorization": 'ce1994a7-9af7-42bc-9b54-75ebefd38b5b'
+				},
+				"method": "get",
+				"mode": "cors"
+			}).then(function(response) {
+				if (response.status === 200) {
+					return response.json();
+				}
+			}).then((response) => {
+				let {
+					code,
+					data,
+					msg
+				} = response;
+				// 按照rateTypeINfo的顺序排序
+				data = data.sort((a, b) => {
+					const order = ['UPS', 'FED', 'DHL'];
+					return order.indexOf(a.rateTypeINfo) - order.indexOf(b.rateTypeINfo);
+				});
+				data = data.map(item => ({
+					...item,
+					regionList: item.regionList.filter(region => ['美国', '中国', '香港'].includes(region
+						.regionInfo))
+				})); 
+				if (code == 200) {
+					let htmlText = ''; 
+					for (let i = 0; i < data.length; i++) {
+						const ele1 = data[i];
+						if (ele1.rateTypeINfo == "FED" || ele1.rateTypeINfo == "UPS") {
+							htmlText += ` 
+                            <div class="content-wrap ${ele1.rateTypeINfo == 'FED' ?'fedExBorder':'upsBorder'}" data-v-69d1d601="">
+                            <div class="top-logo-wrap" data-v-69d1d601="">
+                                <div class="top-logo" data-v-69d1d601="" style=""><img src="${ele1.rateTypeINfo == 'FED' ? '/static/img/fedEx.f0f1cf8b.png' : '/static/img/ups.3bc30b3a.png'}"
+                                        alt="logo" data-v-69d1d601=""></div>    
+                                <p data-v-69d1d601="">燃油实时数据</p>
+                            </div>
+                            <div class="content-cell-wrap" data-v-69d1d601="">
+                                `
+							htmlText +=
+								`<div class="content-cell ${ele1.rateTypeINfo == 'FED' ?'fedExBg':'upsBg'}" data-v-69d1d601="">`
+							htmlText += `
+                                    <div class="content-title-wrap" data-v-69d1d601="">
+                                        <p class="content-area-title" data-v-69d1d601="">Nation and regions</p>
+                                        <p class="content-date-title" data-v-69d1d601="">Effective Start Date</p>
+                                        <p class="content-export-title" data-v-69d1d601="">Export</p>
+                                        <p class="content-import-title" data-v-69d1d601="">Import</p>
+                                        <p class="content-ground-title" data-v-69d1d601="">Groud</p>
+                                        <p class="double-width" data-v-69d1d601="">Domestic Air</p>
+										${ele1.rateTypeINfo == "UPS"?'<p class="content-ground-title" data-v-69d1d601="">Ground Export</p>':''}
+                                    </div>
+                                </div>`
+							for (let n = 0; n < ele1.regionList.length; n++) {
+								const ele2 = ele1.regionList[n];
+
+								// if (ele2.regionInfo == "欧盟") {
+								//     htmlText += `
+								//     <div class="content-title-wrap" data-v-69d1d601="">
+								//         <p class="content-area-title" data-v-69d1d601="">Nation and regions</p>
+								//         <p class="content-date-title" data-v-69d1d601="">Effective Start Date</p>
+								//         <p class="content-export-title" data-v-69d1d601="">Export</p>
+								//         <p class="content-import-title" data-v-69d1d601="">Import</p>
+								//         <p class="content-ground-title" data-v-69d1d601="">Standard Services</p>
+								//         <p class="double-width" data-v-69d1d601="">All Express Services Within the EU
+								//         </p>
+								//     </div>
+								//     <div class="content-count-wrap" data-v-69d1d601="">
+								//         <div class="content-count-cell-area content-area-title" data-v-69d1d601="">
+								//             <p data-v-69d1d601="">${ele2.regionInfo}</p>
+								//         </div>
+								//         <div class="content-count-cell-wrap" data-v-69d1d601="">`
+								//     for (let j = 0; j < ele2.rateList.length; j++) {
+								//         const ele3 = ele2.rateList[i];
+								//         // console.log(ele3);
+								//         htmlText += ` <div class="content-count-cell" data-v-69d1d601="">
+								//                 <p class="content-date" data-v-69d1d601="">${ ele3.ratetime }</p>
+								//                 <p class="content-export" data-v-69d1d601="">${ele3.communs1}</p>
+								//                 <p class="content-import" data-v-69d1d601="">${ele3.communs2}</p>
+								//                 <p class="content-ground" data-v-69d1d601="">${ele3.communs3}</p>
+								//                 <p class="content-other" data-v-69d1d601="">${ele3.communs4}</p>
+								//             </div>`
+								//     }
+
+								//     htmlText += `</div>
+								//     </div>
+								//     <div class="content-title-wrap" data-v-69d1d601="">
+								//         <p class="content-area-title" data-v-69d1d601="">Nation and regions</p>
+								//         <p class="content-date-title" data-v-69d1d601="">Effective Start Date</p>
+								//         <p class="content-export-title" data-v-69d1d601="">Export</p>
+								//         <p class="content-import-title" data-v-69d1d601="">Import</p>
+								//         <p class="content-ground-title" data-v-69d1d601="">Groud</p>
+								//         <p class="double-width" data-v-69d1d601="">Domestic Air</p>
+								//     </div>
+								// </div>`
+								// }
+								// else {
+
+								htmlText += `<div class="content-cell fedExBg" data-v-69d1d601="">
+                            <div class="content-title-wrap" data-v-69d1d601="" style="display: none;">
+                                <p class="content-area-title" data-v-69d1d601="">Nation and regions</p>
+                                <p class="content-date-title" data-v-69d1d601="">Effective Start Date</p>
+                                <p class="content-export-title" data-v-69d1d601="">Export</p>
+                                <p class="content-import-title" data-v-69d1d601="">Import</p>
+                                <p class="content-ground-title" data-v-69d1d601="">Standard Services</p>
+                                <p class="double-width" data-v-69d1d601="">All Express Services Within the EU</p>
+                            </div>
+                            <div class="content-count-wrap" data-v-69d1d601="">
+                                        <div class="content-count-cell-area content-area-title" data-v-69d1d601="">
+                                            <p data-v-69d1d601="">${ele2.regionInfo}</p>
+                                        </div>
+                                        <div class="content-count-cell-wrap" data-v-69d1d601="">`
+								for (let j = 0; j < ele2.rateList.length; j++) {
+									const ele3 = ele2.rateList[j];
+									htmlText += ` <div class="content-count-cell" data-v-69d1d601="">
+                                                <p class="content-date" data-v-69d1d601="">${ele3.ratetime.replace(/^\d{4}\//, '')}</p>
+                                                <p class="content-export" data-v-69d1d601="">${ele3.communs1}</p>
+                                                <p class="content-import" data-v-69d1d601="">${ele3.communs2}</p>
+                                                <p class="content-ground" data-v-69d1d601="">${ele3.communs3}</p>
+                                                <p class="content-other" data-v-69d1d601="">${ele3.communs4}</p>
+												${ele1.rateTypeINfo == "UPS"?'<p class="content-other" data-v-69d1d601="">'+(ele3.communs5||'--')+'</p>':''}
+												
+                                            </div>`
+								}
+
+								htmlText += `</div>
+                                    </div>
+                            <div class="content-title-wrap" data-v-69d1d601="" style="display: none;">
+                                <p class="content-area-title" data-v-69d1d601="">Nation and regions</p>
+                                <p class="content-date-title" data-v-69d1d601="">Effective Start Date</p>
+                                <p class="content-export-title" data-v-69d1d601="">Export</p>
+                                <p class="content-import-title" data-v-69d1d601="">Import</p>
+                                <p class="content-ground-title" data-v-69d1d601="">Groud</p>
+                                <p class="double-width" data-v-69d1d601="">Domestic Air</p>
+                            </div>
+                        </div>`
+							}
+							// }
+
+							htmlText += ` </div>
+                        </div>
+                           `
+						} else if (ele1.rateTypeINfo == "DHL") {
+							htmlText += ` 
+                            <div class="content-wrap dhlBorder" data-v-69d1d601="">
+                            <div class="top-logo-wrap" data-v-69d1d601="">
+                                <div class="top-logo" data-v-69d1d601="" style=""><img src="data:image/png;base64,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"
+                                        alt="logo" data-v-69d1d601=""></div>
+                                <p data-v-69d1d601="">燃油实时数据</p>
+                            </div>
+                            <div class="content-cell-wrap" data-v-69d1d601="">
+                                `
+							for (let n = 0; n < ele1.regionList.length; n++) {
+								const ele2 = ele1.regionList[n];
+								// if (ele2.regionInfo == "欧盟") {
+								htmlText += `<div class="content-cell dhlBg" data-v-69d1d601="">
+                                        <div class="content-title-wrap" data-v-69d1d601=""  style="${n == 0?'':'display:none;'}">
+                                <p class="content-area-title" data-v-69d1d601="">Nation and regions</p>
+                                <p class="content-date-title" data-v-69d1d601="">Effective Start Date</p>
+                                <p class="content-export-title" data-v-69d1d601="">Export</p>
+                                <p class="content-import-title" data-v-69d1d601="">Import</p>
+                                <p class="content-ground-title" data-v-69d1d601="">Road</p>
+                                <p class="double-width" data-v-69d1d601="">— —</p>
+                            </div>
+                                    <div class="content-count-wrap" data-v-69d1d601="">
+                                        <div class="content-count-cell-area content-area-title" data-v-69d1d601="">
+                                            <p data-v-69d1d601="">${ele2.regionInfo}</p>
+                                        </div>
+                                        <div class="content-count-cell-wrap" data-v-69d1d601="">`
+								for (let j = 0; j < ele2.rateList.length; j++) {
+									const ele3 = ele2.rateList[j];
+									htmlText += ` <div class="content-count-cell" data-v-69d1d601="">
+                                                <p class="content-date" data-v-69d1d601="">${ele3.ratetime.replace(/^\d{4}\//, '')}</p>
+                                                <p class="content-export" data-v-69d1d601="">${ele3.communs1}</p>
+                                                <p class="content-import" data-v-69d1d601="">${ele3.communs2}</p>
+                                                <p class="content-ground" data-v-69d1d601="">${ele3.communs3}</p>
+                                                <p class="content-other" data-v-69d1d601="">${ele3.communs4}</p>
+                                            </div>`
+								}
+
+								htmlText += `</div>
+                                    </div>
+                                    <div class="content-title-wrap" data-v-69d1d601="" style="display:none;">
+                                        <p class="content-area-title" data-v-69d1d601="">Nation and regions</p>
+                                        <p class="content-date-title" data-v-69d1d601="">Effective Start Date</p>
+                                        <p class="content-export-title" data-v-69d1d601="">Export</p>
+                                        <p class="content-import-title" data-v-69d1d601="">Import</p>
+                                        <p class="content-ground-title" data-v-69d1d601="">Groud</p>
+                                        <p class="double-width" data-v-69d1d601="">Domestic Air</p>
+                                    </div>
+                                </div>`
+								// }
+							}
+
+							htmlText += ` </div>
+                        </div>
+                           `
+						}
+					}
+					document.querySelector("#view-total").innerHTML = htmlText;
+				} else {
+					alert(msg)
+				}
+			})
+			// $.ajax({
+			//     type: 'get',
+			//     url: ` http://www.shipsoeasy.com:8401/upsrate/selectRate`,
+			//     // data: 'name=zhangsan&age=20'
+			//     data: {
+			//     },
+			//     // contentType: 'application/json'
+			//     // contentType: 'application/json',
+			//     dataType: "json",
+			//     beforeSend: function (request) {
+			//         // request.setRequestHeader("Authorization", token);
+			//     },
+			//     // 会自动帮我们把返回的数据根据响应头设置的类型进行转换好（也就是会自动转成json对象）
+			//     success: function (response) {
+			//         // console.log(response);
+
+			//     }
+			// })
+		</script>
+	</body>
+
+</html>

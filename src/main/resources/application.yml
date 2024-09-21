@@ -1,0 +1,43 @@
+server:
+  port: 8771
+#  servlet:
+#    context-path: /register
+
+logging:
+  level:
+    root: INFO
+  file:
+    name: logs/register.log
+
+spring:
+  data:
+    redis:
+#      host: 192.168.109.222
+      host: 127.0.0.1
+      port: 6379
+      password: LUIcYikvVg6i4pV
+      database: 0
+      timeout: 10s
+      lettuce:
+        pool:
+          max-active: 200
+          max-idle: 10
+          min-idle: 0
+          max-wait: 10000
+  mvc:
+    static-path-pattern: /static/**
+  thymeleaf:
+    prefix: classpath:/templates/
+    suffix: .html
+
+knife4j:
+  enable: false
+  basic:
+    username: admin
+    password: 123123
+    enable: true
+  setting:
+    language: zh_cn
+    enable-footer: true
+    enable-footer-custom: true
+    footer-custom-content: Apache License 2.0 | Copyright  2019-[XIHE](https://www.baidu.com)
