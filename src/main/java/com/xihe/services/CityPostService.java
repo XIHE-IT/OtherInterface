@@ -2,6 +2,8 @@ package com.xihe.services;
 
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
+import java.util.List;
+
 /**
  * 城邮服务
  *
@@ -65,4 +67,24 @@ public interface CityPostService {
      * @date 2024/9/4 13:23
      */
     ObjectNode interceptAddress(String address);
+
+    /**
+     * 模糊查询仓库代码
+     *
+     * @param str 字符串
+     * @return java.util.List<java.lang.String>
+     * @author yangL
+     * @since 2024/9/21
+     */
+    List<String> getStatCodeList(String str);
+
+    /**
+     * 根据仓库代码查询 地址+城市+省州二字码+邮编
+     *
+     * @param statCode 仓库代码
+     * @return com.fasterxml.jackson.databind.JsonNode
+     * @author yangL
+     * @since 2024/9/21
+     */
+    List<String> getCountryCombinationInfoList(String statCode);
 }

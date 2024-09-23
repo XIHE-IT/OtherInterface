@@ -6,9 +6,11 @@ import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.xihe.services.CityPostService;
+import com.xihe.util.JsonUtil;
 import jakarta.annotation.Resource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.redis.core.HashOperations;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.data.redis.core.ValueOperations;
@@ -20,6 +22,7 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -31,9 +34,23 @@ import java.util.regex.Pattern;
  */
 @Service("basicUsCountryInfoService")
 public class CityPostServiceImpl implements CityPostService {
+
     private static final Logger log = LoggerFactory.getLogger(CityPostServiceImpl.class);
+
     @Resource
     private StringRedisTemplate stringRedisTemplate;
+
+    @Value("${other.connect.driver}")
+    private String driver;
+
+    @Value("${other.connect.url}")
+    private String url;
+
+    @Value("${other.connect.username}")
+    private String username;
+
+    @Value("${other.connect.password}")
+    private String password;
 
     /**
      * 查询所有省/州
@@ -438,5 +455,90 @@ public class CityPostServiceImpl implements CityPostService {
         judgePostCodeExists(objectNode);
         return objectNode;
     }
+
+    @Override
+    public List<String> getStatCodeList(String str) {
+        List<String> statCodeList = new ArrayList<>();
+        Connection con = null;
+        PreparedStatement pre = null;
+        ResultSet rs = null;
+        try{
+            con = this.initializeConnection();
+            String sql = "select distinct basic_stat_code from basic_us_country_info where basic_stat_code like ?";
+            pre = con.prepareStatement(sql);
+            pre.setString(1, "%"+str.toUpperCase()+"%");
+            rs = pre.executeQuery();
+            while (rs.next()) {
+                statCodeList.add(rs.getString("basic_stat_code").trim());
+            }
+        }catch (Exception e) {
+            log.error(e.getMessage());
+        }finally {
+            this.closeStatement(con, pre, rs);
+        }
+        return statCodeList;
+    }
+
+    @Override
+    public List<String> getCountryCombinationInfoList(String statCode) {
+        List<String> countryCombinationInfoList = new ArrayList<>();
+        Connection con = null;
+        PreparedStatement pre = null;
+        ResultSet rs = null;
+        try{
+            con = this.initializeConnection();
+            String sql = "select distinct basic_country_address,townname,province,postcode from basic_us_country_info where basic_stat_code = ?";
+            pre = con.prepareStatement(sql);
+            pre.setString(1, statCode);
+            rs = pre.executeQuery();
+            while (rs.next()) {
+                countryCombinationInfoList.add(JsonUtil.toJson(Map.ofEntries(
+                        Map.entry("basic_country_address", rs.getString("basic_country_address").trim()),
+                        Map.entry("townname", rs.getString("townname").trim()),
+                        Map.entry("province", rs.getString("province").trim()),
+                        Map.entry("postcode", rs.getString("postcode").trim())
+                )));
+            }
+        }catch (Exception e) {
+            log.error(e.getMessage());
+        }finally {
+            this.closeStatement(con, pre, rs);
+        }
+        return countryCombinationInfoList;
+    }
+
+    /**
+     * 初始化连接
+     *
+     * @author yangL
+     * @since  2024/9/21
+     */
+    private Connection initializeConnection() throws Exception {
+        Class.forName(driver);
+        return DriverManager.getConnection(url, username, password);
+    }
+
+    /**
+     * 关闭声明
+     *
+     * @author yangL
+     * @since  2024/9/21
+     */
+    private void closeStatement(Connection con, PreparedStatement pre,  ResultSet rs){
+        try {
+            if (rs != null) {
+                rs.close();
+            }
+            if (pre != null) {
+                pre.close();
+            }
+            if (con != null) {
+                con.close();
+            }
+        }catch (Exception e) {
+            log.error(e.getMessage());
+        }
+    }
+
 }
 

@@ -41,3 +41,10 @@ knife4j:
     enable-footer: true
     enable-footer-custom: true
     footer-custom-content: Apache License 2.0 | Copyright  2019-[XIHE](https://www.baidu.com)
+
+other:
+  connect:
+    url: jdbc:jtds:sqlserver://localhost:1433/k5new
+    username: sa
+    password: qwe123!
+    driver: net.sourceforge.jtds.jdbc.Driver

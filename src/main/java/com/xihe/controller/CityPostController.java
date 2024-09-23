@@ -15,6 +15,8 @@ import jakarta.validation.Valid;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+
 /**
  * @Author gzy
  * @Date 2024/8/15 15:34
@@ -81,4 +83,19 @@ public class CityPostController {
     public Result<String> test() {
         return Result.success("test");
     }
+
+    @Operation(summary = "模糊查询仓库代码")
+    @GetMapping("/getStatCodeList/{str}")
+    @ResponseBody
+    public Result<List<String>> getStatCodeList(@PathVariable String str) {
+        return Result.success(cityPostService.getStatCodeList(str));
+    }
+
+    @Operation(summary = "根据仓库代码查询 地址+城市+省州二字码+邮编")
+    @GetMapping("/getCountryCombinationInfoList/{statCode}")
+    @ResponseBody
+    public Result<List<String>> getCountryCombinationInfoList(@PathVariable String statCode) {
+        return Result.success(cityPostService.getCountryCombinationInfoList(statCode));
+    }
+
 }
