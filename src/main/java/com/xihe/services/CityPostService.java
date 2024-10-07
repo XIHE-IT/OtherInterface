@@ -82,7 +82,7 @@ public interface CityPostService {
      * 根据仓库代码查询 地址+城市+省州二字码+邮编
      *
      * @param statCode 仓库代码
-     * @return com.fasterxml.jackson.databind.JsonNode
+     * @return java.util.List<java.lang.String>
      * @author yangL
      * @since 2024/9/21
      */
