@@ -1,5 +1,7 @@
 package com.xihe.services.impl;
 
+import com.alibaba.fastjson2.JSONArray;
+import com.alibaba.fastjson2.JSONObject;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
@@ -7,12 +9,9 @@ import com.xihe.entity.Fuel;
 import com.xihe.util.DateUtil;
 import com.xihe.util.JsonUtil;
 import jakarta.annotation.Resource;
-import kong.unirest.HttpResponse;
-import kong.unirest.Unirest;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.core.HashOperations;
 import org.springframework.data.redis.core.StringRedisTemplate;
-import org.springframework.data.redis.core.ValueOperations;
 import org.springframework.stereotype.Service;
 
 import java.text.ParseException;
@@ -39,9 +38,8 @@ public class FuelImpl {
     StringRedisTemplate stringRedisTemplate;
     //第三方和UPS日期格式
     private static final SimpleDateFormat thirdDateFormat = new SimpleDateFormat("yyyy/MM/dd");
-    private static final SimpleDateFormat upsDateFormat = new SimpleDateFormat("dd/MM/yyyy");
-    private static final SimpleDateFormat fedexDateFormat = new SimpleDateFormat("yyyy年MM月dd日");
-    private static final SimpleDateFormat dhlDateFormat = new SimpleDateFormat("MM月 yyyy");
+    //    private static final SimpleDateFormat upsDateFormat = new SimpleDateFormat("dd/MM/yyyy");
+    private static final SimpleDateFormat dhlDateFormat = new SimpleDateFormat("yyyy/MM");
 
     /**
      * 解析燃油的日期格式，当在周一的时候校验是否需要更新，若获取到的燃油时间为7天前的时间则返回1个小时的缓存时间，否则返回到下周一的时间
@@ -55,14 +53,10 @@ public class FuelImpl {
     private long getCacheTime(String fuelKey, String fuelDate) {
         //大于7天表示还未到更新时间，则每个小时更新一次
         Date rateDate = null;
-        long expireTime = 7;
+        long expireTime = 5;
         try {
-            if ("all".equals(fuelKey)) {
+            if ("all".equals(fuelKey) || "ups".equals(fuelKey) || "fedex".equals(fuelKey)) {
                 rateDate = thirdDateFormat.parse(fuelDate);
-            } else if ("ups".equals(fuelKey)) {
-                rateDate = upsDateFormat.parse(fuelDate);
-            } else if ("fedex".equals(fuelKey)) {
-                rateDate = fedexDateFormat.parse(fuelDate);
             } else if ("dhl".equals(fuelKey)) {
                 rateDate = dhlDateFormat.parse(fuelDate);
                 expireTime = 30;
@@ -72,11 +66,11 @@ public class FuelImpl {
         }
         assert rateDate != null;
         long tempRateTime = rateDate.getTime();
-        long difference = 3600L;
-        if (7 == expireTime) {
+        long difference = 3600L * 5;
+        if (5 == expireTime) {
             if (System.currentTimeMillis() - tempRateTime < 86400000 * expireTime) {
                 Date nowDate = new Date();
-                return DateUtil.getDifference(new Date(), DateUtil.getNextWeekMonday(nowDate)) / 1000;
+                return DateUtil.getDifference(new Date(), DateUtil.getNextWeekMonday(nowDate)) / 1000 - (36 * 60 * 60);
             }
         } else {
             if (System.currentTimeMillis() - tempRateTime < 86400000 * expireTime) {
@@ -147,37 +141,185 @@ public class FuelImpl {
         return objectNode;
     }
 
-    public JsonNode getAllFuel() {
-//        JsonNode ups = getCommonFuel("ups");
-//        JsonNode fedex = getCommonFuel("fedex");
-//        JsonNode dhl = getCommonFuel("dhl");
-//        ObjectMapper objectMapper = new ObjectMapper();
-//        ObjectNode objectNode = objectMapper.createObjectNode();
-//        objectNode.set("ups", ups.get(0));
-//        objectNode.set("fedex", fedex.get(0));
-//        objectNode.set("dhl", dhl.get(0));
-//        return objectNode;
-
-        ValueOperations<String, String> valueOperations = stringRedisTemplate.opsForValue();
-        String fuel = valueOperations.get("all--fuel");
-        if (null != fuel) {
-            return JsonUtil.toTree(fuel);
-        }
-        HttpResponse<String> response = Unirest.get("http://www.shipsoeasy.com:8401/upsrate/selectRate")
-                .asString();
-        String backStr = response.getBody();
-        JsonNode backJson = JsonUtil.toTree(backStr);
-        JsonNode regionList = backJson.get("data").get(1).get("regionList").get(1).get("rateList");
-        ObjectNode nowNode = (ObjectNode) regionList.get(0);
-        ObjectNode beforeNode = (ObjectNode) regionList.get(1);
-        //给UPS添加国际地面出口进口附加费
+    public JSONArray getAllFuel() {
         JsonNode ups = getCommonFuel("ups");
-        nowNode.put("communs5", ups.get("us").get(0).get("fuel5").asText());
-        beforeNode.put("communs5", ups.get("us").get(1).get("fuel5").asText());
-        //获取UPS的校验日期，第三方的日期格式为2024/09/09
-        long difference = getCacheTime("all", nowNode.get("ratetime").asText());
-        log.info("获取第三方燃油成功，添加缓存时间为：{}！", difference);
-        valueOperations.set("all--fuel", backJson.toString(), difference, TimeUnit.SECONDS);
-        return backJson;
+        JsonNode fedex = getCommonFuel("fedex");
+        JsonNode dhl = getCommonFuel("dhl");
+        JSONArray backArr = new JSONArray();
+        JSONObject upsJson = new JSONObject();
+        if (!ups.isEmpty()) {
+            JSONArray upsList = new JSONArray();
+
+            if (ups.has("us")) {
+                JSONObject cnJson = new JSONObject();
+                cnJson.put("regionInfo", "美国");
+                JSONArray rateList = new JSONArray();
+                for (int i = 0; i < 2; i++) {
+                    JsonNode jsonNode = ups.get("us").get(i);
+                    JSONObject tempJson = new JSONObject();
+                    tempJson.put("communs1", jsonNode.get("fuel3").asText());
+                    tempJson.put("communs2", jsonNode.get("fuel4").asText());
+                    tempJson.put("communs3", jsonNode.get("fuel1").asText());
+                    tempJson.put("communs4", jsonNode.get("fuel2").asText());
+                    tempJson.put("communs5", jsonNode.get("fuel5").asText());
+                    tempJson.put("ratetime", jsonNode.get("fuelDate").asText().substring(2));
+                    rateList.add(tempJson);
+                }
+                cnJson.put("rateList", rateList);
+                upsList.add(cnJson);
+            }
+
+            if (ups.has("cn")) {
+                JSONObject cnJson = new JSONObject();
+                cnJson.put("regionInfo", "中国");
+                JSONArray rateList = new JSONArray();
+                for (int i = 0; i < 2; i++) {
+                    JsonNode jsonNode = ups.get("cn").get(i);
+                    JSONObject tempJson = new JSONObject();
+                    tempJson.put("communs1", jsonNode.get("fuel1").asText());
+                    tempJson.put("communs2", jsonNode.get("fuel1").asText());
+                    tempJson.put("communs3", "");
+                    tempJson.put("communs4", "");
+                    tempJson.put("ratetime", jsonNode.get("fuelDate").asText().substring(2));
+                    rateList.add(tempJson);
+                }
+                cnJson.put("rateList", rateList);
+                upsList.add(cnJson);
+
+                cnJson = new JSONObject();
+                cnJson.put("regionInfo", "香港");
+                cnJson.put("rateList", rateList);
+                upsList.add(cnJson);
+            }
+
+            upsJson.put("rateTypeINfo", "UPS");
+            upsJson.put("regionList", upsList);
+            backArr.add(upsJson);
+        }
+
+
+        JSONObject fedexJson = new JSONObject();
+        if (!fedex.isEmpty()) {
+            JSONArray fedexList = new JSONArray();
+
+            if (fedex.has("us")) {
+                JSONObject cnJson = new JSONObject();
+                cnJson.put("regionInfo", "美国");
+                JSONArray rateList = new JSONArray();
+                for (int i = 0; i < 2; i++) {
+                    JsonNode jsonNode = fedex.get("us").get(i);
+                    JSONObject tempJson = new JSONObject();
+                    tempJson.put("communs1", jsonNode.get("fuel1").asText());
+                    tempJson.put("communs2", jsonNode.get("fuel2").asText());
+                    tempJson.put("communs3", jsonNode.get("fuel3").asText());
+                    tempJson.put("communs4", jsonNode.get("fuel4").asText());
+                    tempJson.put("ratetime", jsonNode.get("fuelDate").asText().substring(2));
+                    rateList.add(tempJson);
+                }
+                cnJson.put("rateList", rateList);
+                fedexList.add(cnJson);
+            }
+
+            if (fedex.has("cn")) {
+                JSONObject cnJson = new JSONObject();
+                cnJson.put("regionInfo", "中国");
+                JSONArray rateList = new JSONArray();
+                for (int i = 0; i < 2; i++) {
+                    JsonNode jsonNode = fedex.get("cn").get(i);
+                    JSONObject tempJson = new JSONObject();
+                    tempJson.put("communs1", jsonNode.get("fuel1").asText());
+                    tempJson.put("communs2", jsonNode.get("fuel1").asText());
+                    tempJson.put("communs3", "");
+                    tempJson.put("communs4", "");
+                    tempJson.put("ratetime", jsonNode.get("fuelDate").asText().substring(2));
+                    rateList.add(tempJson);
+                }
+                cnJson.put("rateList", rateList);
+                fedexList.add(cnJson);
+
+                cnJson = new JSONObject();
+                cnJson.put("regionInfo", "香港");
+                cnJson.put("rateList", rateList);
+                fedexList.add(cnJson);
+            }
+
+            fedexJson.put("rateTypeINfo", "FED");
+            fedexJson.put("regionList", fedexList);
+            backArr.add(fedexJson);
+        }
+
+        JSONObject DhlJson = new JSONObject();
+        if (!dhl.isEmpty()) {
+            JSONArray dhlList = new JSONArray();
+
+            if (dhl.has("us")) {
+                JSONObject cnJson = new JSONObject();
+                cnJson.put("regionInfo", "美国");
+                JSONArray rateList = new JSONArray();
+                for (int i = 0; i < 2; i++) {
+                    JsonNode jsonNode = dhl.get("us").get(i);
+                    JSONObject tempJson = new JSONObject();
+                    tempJson.put("communs1", jsonNode.get("fuel1").asText());
+                    tempJson.put("communs2", jsonNode.get("fuel2").asText());
+                    tempJson.put("communs3", "");
+                    tempJson.put("communs4", "");
+                    tempJson.put("ratetime", jsonNode.get("fuelDate").asText().substring(2));
+                    rateList.add(tempJson);
+                }
+                cnJson.put("rateList", rateList);
+                dhlList.add(cnJson);
+            }
+
+            if (dhl.has("cn")) {
+                JSONObject cnJson = new JSONObject();
+                cnJson.put("regionInfo", "中国");
+                JSONArray rateList = new JSONArray();
+                for (int i = 0; i < 2; i++) {
+                    JsonNode jsonNode = dhl.get("cn").get(i);
+                    JSONObject tempJson = new JSONObject();
+                    tempJson.put("communs1", jsonNode.get("fuel1").asText());
+                    tempJson.put("communs2", jsonNode.get("fuel1").asText());
+                    tempJson.put("communs3", "");
+                    tempJson.put("communs4", "");
+                    tempJson.put("ratetime", jsonNode.get("fuelDate").asText().substring(2));
+                    rateList.add(tempJson);
+                }
+                cnJson.put("rateList", rateList);
+                dhlList.add(cnJson);
+
+                cnJson = new JSONObject();
+                cnJson.put("regionInfo", "香港");
+                cnJson.put("rateList", rateList);
+                dhlList.add(cnJson);
+            }
+
+            DhlJson.put("rateTypeINfo", "DHL");
+            DhlJson.put("regionList", dhlList);
+            backArr.add(DhlJson);
+        }
+        return backArr;
+
+
+//        ValueOperations<String, String> valueOperations = stringRedisTemplate.opsForValue();
+//        String fuel = valueOperations.get("all--fuel");
+//        if (null != fuel) {
+//            return JsonUtil.toTree(fuel);
+//        }
+//        HttpResponse<String> response = Unirest.get("http://www.shipsoeasy.com:8401/upsrate/selectRate")
+//                .asString();
+//        String backStr = response.getBody();
+//        JsonNode backJson = JsonUtil.toTree(backStr);
+//        JsonNode regionList = backJson.get("data").get(1).get("regionList").get(1).get("rateList");
+//        ObjectNode nowNode = (ObjectNode) regionList.get(0);
+//        ObjectNode beforeNode = (ObjectNode) regionList.get(1);
+//        //给UPS添加国际地面出口进口附加费
+//        JsonNode ups = getCommonFuel("ups");
+//        nowNode.put("communs5", ups.get("us").get(0).get("fuel5").asText());
+//        beforeNode.put("communs5", ups.get("us").get(1).get("fuel5").asText());
+//        //获取UPS的校验日期，第三方的日期格式为2024/09/09
+//        long difference = getCacheTime("all", nowNode.get("ratetime").asText());
+//        log.info("获取第三方燃油成功，添加缓存时间为：{}！", difference);
+//        valueOperations.set("all--fuel", backJson.toString(), difference, TimeUnit.SECONDS);
+//        return backJson;
     }
 }

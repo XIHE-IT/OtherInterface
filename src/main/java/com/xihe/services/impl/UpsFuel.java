@@ -72,7 +72,8 @@ public class UpsFuel implements FuelServices {
         List<Fuel> list = new ArrayList<>();
         for (JsonNode temp : tempNode) {
             Fuel fuel = new Fuel();
-            fuel.setFuelDate(temp.get("Field1").asText());
+            String fuelDate = temp.get("Field1").asText();
+            fuel.setFuelDate(fuelDate.substring(fuelDate.length() - 4) + "/" + fuelDate.substring(0, fuelDate.length() - 5));
             fuel.setFuel1(temp.get("Field2").asText());
             fuel.setFuel2(temp.get("Field3").asText());
             fuel.setFuel3(temp.get("Field4").asText());

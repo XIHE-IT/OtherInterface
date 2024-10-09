@@ -5,12 +5,33 @@ import java.time.LocalDate;
 import java.time.ZoneId;
 import java.util.Calendar;
 import java.util.Date;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * @Author gzy
  * @Date 2024/8/14 14:26
  */
 public class DateUtil {
+    // 静态映射表，用于将中文月份名称映射到数字月份
+    private static final Map<String, String> chineseMonthToNumberMap = new HashMap<>();
+
+    static {
+        // 初始化映射表
+        chineseMonthToNumberMap.put("一月", "01");
+        chineseMonthToNumberMap.put("二月", "02");
+        chineseMonthToNumberMap.put("三月", "03");
+        chineseMonthToNumberMap.put("四月", "04");
+        chineseMonthToNumberMap.put("五月", "05");
+        chineseMonthToNumberMap.put("六月", "06");
+        chineseMonthToNumberMap.put("七月", "07");
+        chineseMonthToNumberMap.put("八月", "08");
+        chineseMonthToNumberMap.put("九月", "09");
+        chineseMonthToNumberMap.put("十月", "10");
+        chineseMonthToNumberMap.put("十一月", "11");
+        chineseMonthToNumberMap.put("十二月", "12");
+    }
+
     /**
      * 获取上一周的周一
      *
@@ -117,6 +138,16 @@ public class DateUtil {
         // 如果你想要秒为单位的时间戳差值
         //        System.out.println("时间戳差值（秒）: " + differenceInSeconds);
         return java.time.Duration.between(now, nextMonthFirstInstant).getSeconds();
+    }
+
+    /**
+     * 将中文月份名称转换为数字月份
+     *
+     * @param chineseMonth 中文月份名称
+     * @return 对应的数字月份，如果转换失败则返回null
+     */
+    public static String chineseMonthToNumber(String chineseMonth) {
+        return chineseMonthToNumberMap.get(chineseMonth);
     }
 
     public static void main(String[] args) {

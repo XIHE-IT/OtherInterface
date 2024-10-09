@@ -9,29 +9,27 @@ import com.xihe.entity.CheckHome;
 import com.xihe.entity.Fuel;
 import com.xihe.services.FuelServices;
 import com.xihe.util.BusinessUtil;
+import com.xihe.util.DateUtil;
 import com.xihe.util.JsonUtil;
 import jakarta.annotation.Resource;
-import kong.unirest.Cookies;
-import kong.unirest.Headers;
 import kong.unirest.HttpResponse;
 import kong.unirest.Unirest;
-import kong.unirest.json.JSONArray;
-import kong.unirest.json.JSONObject;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
+import org.openqa.selenium.WebDriver;
+import org.openqa.selenium.chrome.ChromeDriver;
 import org.springframework.data.redis.core.HashOperations;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.data.redis.core.ValueOperations;
 import org.springframework.stereotype.Service;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.*;
 
 /**
  * Fedex获取燃油
@@ -46,8 +44,11 @@ public class FedexFuel implements FuelServices {
     StringRedisTemplate stringRedisTemplate;
     @Resource
     BusinessUtil businessUtil;
+    private static final SimpleDateFormat simpleDateFormat = new SimpleDateFormat("MMM. dd, yyyy", Locale.US);
+    private static final SimpleDateFormat backDate = new SimpleDateFormat("yyyy/MM/dd");
+
     //测试环境
-    //    private static final String fedexUrl = "https://apis-sandbox.fedex.com";
+//    private static final String fedexUrl = "https://apis-sandbox.fedex.com";
 //    private static final String key = "l7201edf87e27941cda0e174fb130b2615";
 //    private static final String password = "e430395269594aa1a0dc66b995db73ee";
     //生产环境
@@ -63,33 +64,105 @@ public class FedexFuel implements FuelServices {
 //        return response.getBody();
 
         Map<String, String> map = new HashMap<>();
-        HttpResponse<String> response = Unirest.get("http://www.xinexpress.com/Fuel-FedEx.html")
-                .asString();
-        map.put("cn", response.getBody());
+//        HttpResponse<String> response = Unirest.get("http://www.xinexpress.com/Fuel-FedEx.html")
+//                .asString();
+//        map.put("cn", response.getBody());
+        WebDriver driver = new ChromeDriver();
+        driver.get("https://www.fedex.com/zh-cn/shipping/surcharges.html");
+        map.put("cn", driver.getPageSource());
+        driver.get("https://www.fedex.com/en-us/shipping/fuel-surcharge.html");
+        map.put("us", driver.getPageSource());
+        driver.quit();
         return map;
     }
 
     @Override
     public Map<String, List<Fuel>> resolveFuel(Map<String, String> fuelMap) {
         Map<String, List<Fuel>> resultMap = new HashMap<>();
+//        String backStr = fuelMap.get("cn");
+//        Document document = Jsoup.parse(backStr);
+//        Elements dhlTable = document.getElementsByClass("Newslist");
+//        Elements trArr = dhlTable.get(0).getElementsByTag("img");
+//        List<Fuel> list = new ArrayList<>();
+//        for (int i = 0; i < 5; i++) {
+//            Element temp = trArr.get(i);
+//            String title = temp.attr("title");
+//            int index = title.indexOf("起");
+//            String tempDate = title.substring(0, index);
+//            index = title.indexOf("附加费是");
+//            String tempFuel = title.substring(index + 4);
+//            Fuel fuel = new Fuel();
+//            fuel.setFuelDate(tempDate);
+//            fuel.setFuel1(tempFuel);
+//            list.add(fuel);
+//        }
+//        resultMap.put("cn", list);
+
+        //中国fedex
         String backStr = fuelMap.get("cn");
         Document document = Jsoup.parse(backStr);
-        Elements dhlTable = document.getElementsByClass("Newslist");
-        Elements trArr = dhlTable.get(0).getElementsByTag("img");
-        List<Fuel> list = new ArrayList<>();
-        for (int i = 0; i < 5; i++) {
-            Element temp = trArr.get(i);
-            String title = temp.attr("title");
-            int index = title.indexOf("起");
-            String tempDate = title.substring(0, index);
-            index = title.indexOf("附加费是");
-            String tempFuel = title.substring(index + 4);
-            Fuel fuel = new Fuel();
-            fuel.setFuelDate(tempDate);
-            fuel.setFuel1(tempFuel);
-            list.add(fuel);
+        Elements fedexTable = document.getElementsByClass("fxg-fsc__table");
+        if(!fedexTable.isEmpty()){
+            Element table = fedexTable.get(0);
+            Elements trArr = table.getElementsByTag("tr");
+            List<Fuel> list = new ArrayList<>();
+            for (int i = 1; i < 5; i++) {
+                Element temp = trArr.get(i);
+                Elements tdArr = temp.getElementsByTag("td");
+                Fuel fuel = new Fuel();
+                String date = tdArr.get(0).text();
+                int index = date.indexOf("-");
+                if (index != -1) {
+                    date = date.substring(0, index - 1);
+                }
+                //从中取出带月字
+                String month = date.substring(3, 5);
+                date = date.substring(7) + "/" + DateUtil.chineseMonthToNumber(month) + "/" + date.substring(0, 2);
+                fuel.setFuelDate(date);
+                fuel.setFuel1(tdArr.get(2).text());
+                list.add(fuel);
+            }
+            resultMap.put("cn", list);
         }
-        resultMap.put("cn", list);
+
+        //美国fedex
+        backStr = fuelMap.get("us");
+        document = Jsoup.parse(backStr);
+        fedexTable = document.getElementsByClass("fxg-table--striped-row");
+        if(!fedexTable.isEmpty()){
+            Element table = fedexTable.get(0);
+            Elements trArr = table.getElementsByTag("tr");
+            List<Fuel> list = new ArrayList<>();
+            for (int i = 2; i < trArr.size(); i++) {
+                Element temp = trArr.get(i);
+                Elements tdArr = temp.getElementsByTag("td");
+                Fuel fuel = new Fuel();
+                String date = tdArr.get(0).text();
+                int index = date.indexOf("–");
+                if (index != -1) {
+                    date = date.substring(0, index);
+                }
+                try {
+                    //校验点前面的是几位数，若多了一位自动切割
+                    index = date.indexOf(".");
+                    if (index > 3) {
+                        date = date.substring(0, index - 1) + ". " + date.substring(6);
+                    }
+                    Date tempDate = simpleDateFormat.parse(date);
+                    date = backDate.format(tempDate);
+                } catch (ParseException e) {
+                    throw new RuntimeException(e);
+                }
+                fuel.setFuelDate(date);
+                fuel.setFuel1(tdArr.get(5).text());
+                fuel.setFuel2(tdArr.get(6).text());
+                fuel.setFuel3(tdArr.get(1).text());
+                fuel.setFuel4(tdArr.get(3).text());
+                list.add(fuel);
+            }
+            resultMap.put("us", list);
+        }
+
         return resultMap;
     }
 
@@ -214,35 +287,5 @@ public class FedexFuel implements FuelServices {
         }
         hashOperations.put("fedex-check-home", tempKey, String.valueOf(code));
         return code;
-    }
-
-    public static void main(String[] args) {
-        HttpResponse<String> response = Unirest.post("http://yqneed.kingtrans.net/Logon?action=logon")
-                .header("Content-Type", "application/x-www-form-urlencoded")
-                .field("ifcookie", "0")
-                .field("cpuno", "")
-                .field("driveno", "")
-                .field("macaddr", "")
-                .field("scanid", "")
-                .field("userid", "asd")
-                .field("password", "123456")
-                .field("captcha", "")
-                .field("Login", " %E7%99%BB%E5%BD%95")
-                .asString();
-        Cookies cookie = response.getCookies();
-        Headers header = response.getHeaders();
-
-        String cookieStr = cookie.getNamed("cookie").toString();
-//        String cookieStr = cookie.getFirst().toString();
-//        int start = cookieStr.indexOf("=") + 1;
-//        int end = cookieStr.indexOf(";");
-//        cookieStr = cookieStr.substring(start, end);
-//        cookieStr = cookieStr.substring(0, end+1);
-        response = Unirest.get("http://yqneed.kingtrans.net/Logon?action=initMenu")
-                .header("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36")
-                .header("Cookie", cookieStr)
-                .asString();
-        String str = response.getBody();
-        System.out.println("111");
     }
 }

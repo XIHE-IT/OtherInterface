@@ -1,5 +1,6 @@
 package com.xihe.controller;
 
+import com.alibaba.fastjson2.JSONArray;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.xihe.entity.CheckHome;
 import com.xihe.entity.Result;
@@ -57,8 +58,8 @@ public class CityPostController {
     @Operation(summary = "所有最新燃油查询")
     @GetMapping
     @ResponseBody
-    public JsonNode getAllFuel() {
-        return fuel.getAllFuel();
+    public Result<JSONArray> getAllFuel() {
+        return Result.success(fuel.getAllFuel());
     }
 
     @Operation(summary = "根据燃油类型获取燃油")
