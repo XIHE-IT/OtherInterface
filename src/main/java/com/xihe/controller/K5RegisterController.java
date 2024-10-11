@@ -123,7 +123,7 @@ public class K5RegisterController {
             System.out.println("end.");
 
             //添加client表
-            String sql = "insert into client(clientid,clientname,clienttype,rectypeid,creditday,corpid,status,opdate,editdate,modidate,editor) values(?,?,1,1,0,'',0,GETDATE(),GETDATE(),GETDATE(),'管理员')";
+            String sql = "insert into client(clientid,clientname,clienttype,rectypeid,creditday,corpid,status,opdate,editdate,modidate,editor,degreeid,holdway,levelid) values(?,?,1,1,0,'',0,GETDATE(),GETDATE(),GETDATE(),'管理员',0,0,0)";
             log.info("添加客户表，sql为：{}", sql);
             pre = con.prepareStatement(sql);
             pre.setString(1, register.getUserId());

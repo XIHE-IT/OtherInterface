@@ -1,12 +1,11 @@
 package com.xihe.util;
 
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.ZoneId;
-import java.util.Calendar;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 
 /**
  * @Author gzy
@@ -88,6 +87,33 @@ public class DateUtil {
         Calendar calendar = Calendar.getInstance();
         calendar.setTime(getThisWeekMonday(date));
         calendar.add(Calendar.DATE, 7);
+        calendar.set(Calendar.HOUR_OF_DAY, 0);
+        calendar.set(Calendar.MINUTE, 0);
+        calendar.set(Calendar.SECOND, 0);
+        calendar.set(Calendar.MILLISECOND, 0);
+        return calendar.getTime();
+    }
+
+    /**
+     * 获取下个月第一天
+     *
+     * @return java.util.Date
+     * @author gzy
+     * @date 2024/10/11 14:18
+     */
+    public static Date getNextMonthDay() {
+        // 创建一个GregorianCalendar实例，默认使用当前日期和时间
+        Calendar calendar = new GregorianCalendar();
+        // 获取当前月份
+        int currentMonth = calendar.get(Calendar.MONTH);
+        // 设置月份为下一个月（注意：Calendar的月份是从0开始的，即0代表1月）
+        calendar.set(Calendar.MONTH, currentMonth + 1);
+        calendar.set(Calendar.HOUR_OF_DAY, 0);
+        calendar.set(Calendar.MINUTE, 0);
+        calendar.set(Calendar.SECOND, 0);
+        calendar.set(Calendar.MILLISECOND, 0);
+        // 为了确保是下个月的第一天，我们需要将日设置为1
+        calendar.set(Calendar.DAY_OF_MONTH, 1);
         return calendar.getTime();
     }
 
@@ -111,12 +137,12 @@ public class DateUtil {
      * @author gzy
      * @date 2024/9/10 11:09
      */
-    public static Long getMonthDifference() {
+    public static Long getMonthDifference(int monthNum) {
         // 获取当前日期
         LocalDate today = LocalDate.now();
 
         // 计算下个月的第一天
-        LocalDate nextMonthFirst = today.plusMonths(1).withDayOfMonth(1);
+        LocalDate nextMonthFirst = today.plusMonths(monthNum).withDayOfMonth(1);
 
         // 转换为Instant（如果需要时间戳的话）
         // 注意：这里我们假设我们想要的是UTC时间的时间戳
@@ -151,8 +177,26 @@ public class DateUtil {
     }
 
     public static void main(String[] args) {
-        System.out.println(getLastWeekMonday(new Date()));
-        System.out.println(getThisWeekMonday(new Date()));
-        System.out.println(getNextWeekMonday(new Date()));
+//        System.out.println(getLastWeekMonday(new Date()));
+//        System.out.println(getThisWeekMonday(new Date()));
+//        System.out.println(getNextWeekMonday(new Date()));
+//        System.out.println(getNextMonthDay());
+//        System.out.println(DateUtil.getMonthDifference(2));
+//        System.out.println(DateUtil.getNextWeekMonday(new Date()));
+
+        String time = "2024/10/14";
+        SimpleDateFormat thirdDateFormat = new SimpleDateFormat("yyyy/MM/dd");
+        long tempRateTime = 0;
+        try {
+            tempRateTime = thirdDateFormat.parse(time).getTime();
+        } catch (ParseException e) {
+            throw new RuntimeException(e);
+        }
+        Date nowDate = new Date();
+        Date nextWeekMonday = DateUtil.getNextWeekMonday(nowDate);
+        long nextMondayTime = nextWeekMonday.getTime();
+        if (tempRateTime >= nextMondayTime) {
+            System.out.println(DateUtil.getDifference(new Date(), nextWeekMonday) / 1000 + (5 * 24 * 60 * 60));
+        }
     }
 }

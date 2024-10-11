@@ -67,14 +67,22 @@ public class FuelImpl {
         assert rateDate != null;
         long tempRateTime = rateDate.getTime();
         long difference = 3600L * 5;
-        if (5 == expireTime) {
-            if (System.currentTimeMillis() - tempRateTime < 86400000 * expireTime) {
-                Date nowDate = new Date();
-                return DateUtil.getDifference(new Date(), DateUtil.getNextWeekMonday(nowDate)) / 1000 - (36 * 60 * 60);
+        if (5 == expireTime) {  //ups、fedex
+            /*
+             * 这里校验当前时间和下周一的时间进行比较
+             * 1、获取到的时间小于下周一的时间，则表示未更新到，则5个小时后继续更新
+             * 2、若获取到的时间大于下周一的时间，则缓存时间为当前时间距离下周五0点的时间
+             */
+            Date nowDate = new Date();
+            Date nextWeekMonday = DateUtil.getNextWeekMonday(nowDate);
+            long nextMondayTime = nextWeekMonday.getTime();
+            if (tempRateTime >= nextMondayTime) {
+                return DateUtil.getDifference(new Date(), nextWeekMonday) / 1000 + (5 * 24 * 60 * 60);
             }
-        } else {
-            if (System.currentTimeMillis() - tempRateTime < 86400000 * expireTime) {
-                return DateUtil.getMonthDifference();
+        } else {                //dhl
+            long nextMonthDayTime = DateUtil.getNextMonthDay().getTime();
+            if (tempRateTime >= nextMonthDayTime) {
+                return DateUtil.getMonthDifference(2) - (4 * 24 * 60 * 60);
             }
         }
         return difference;
@@ -115,12 +123,7 @@ public class FuelImpl {
             for (String key : resolveFuel.keySet()) {
                 hashOperations.put(fuelKey + "--fuel", key, objectNode.get(key).toString());
             }
-            String fuelDate = null;
-            if ("ups".equals(fuelKey)) {
-                fuelDate = resolveFuel.get("us").get(0).getFuelDate();
-            } else if ("fedex".equals(fuelKey) || "dhl".equals(fuelKey)) {
-                fuelDate = resolveFuel.get("cn").get(0).getFuelDate();
-            }
+            String fuelDate = resolveFuel.get("cn").get(0).getFuelDate();
             if (null == fuelDate) {
                 throw new RuntimeException("获取" + fuelKey + "燃油失败！");
             }
