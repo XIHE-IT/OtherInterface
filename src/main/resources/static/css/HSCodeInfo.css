@@ -1,0 +1,125 @@
+input[type="submit"],
+input[type="reset"],
+input[type="button"],
+button {
+    -webkit-appearance: none;
+}
+
+.page {
+    margin-top: 20px;
+}
+
+    .page a {
+        padding: 8px 15px;
+        background: #e5e5e5;
+        margin-right: 2px;
+        color: #666;
+    }
+
+        .page a.current, .page a:hover {
+            background: #5eaeff;
+            color: #fff;
+        }
+
+    .page .prev {
+        display: inline-block;
+        background: #e5e5e5;
+        padding: 8px 15px;
+        float: left;
+    }
+
+    .page .next {
+        display: inline-block;
+        background: #e5e5e5;
+        padding: 8px 15px;
+        float: right;
+    }
+
+.panel-heading-custom {
+    color: #333;
+    background-color: white;
+    font-size: 12px;
+    padding: 5px 15px 0px 15px;
+    border: none;
+}
+
+.panel-body-custom {
+    padding: 7px 15px;
+    font-size: 20px;
+    color: black;
+}
+
+.panel-footer-custom {
+    background-color: white;
+    border: none;
+    padding: 0px 15px 5px 15px;
+    font-size: 12px;
+}
+
+.text-weight {
+    font-weight: bold;
+}
+
+.margin-left-none {
+    margin-left: 0px;
+}
+
+.padding-left-none {
+    padding-left: 0px;
+}
+
+.wrap {
+    background-color: #2d76c8;
+    background-image: url("/content/images/shadow_light.png"), url("/content/images/pixels.png");
+    background-position: 0 0, 0 0;
+    background-repeat: repeat-x, repeat;
+}
+
+.table-custom > tbody > tr > td {
+    font-size: 10px;
+}
+
+/*
+ * Off Canvas
+ * --------------------------------------------------
+ */
+@media screen and (max-width: 767px) {
+    .row-offcanvas {
+        position: relative;
+        -webkit-transition: all .25s ease-out;
+        -o-transition: all .25s ease-out;
+        transition: all .25s ease-out;
+    }
+
+    .row-offcanvas-right {
+        right: 0;
+    }
+
+    .row-offcanvas-left {
+        left: 0;
+    }
+
+    .row-offcanvas-right
+    .sidebar-offcanvas {
+        right: -50%; /* 6 columns */
+    }
+
+    .row-offcanvas-left
+    .sidebar-offcanvas {
+        left: -50%; /* 6 columns */
+    }
+
+    .row-offcanvas-right.active {
+        right: 50%; /* 6 columns */
+    }
+
+    .row-offcanvas-left.active {
+        left: 50%; /* 6 columns */
+    }
+
+    .sidebar-offcanvas {
+        position: absolute;
+        top: 0;
+        width: 50%; /* 6 columns */
+    }
+}

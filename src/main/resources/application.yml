@@ -48,3 +48,5 @@ other:
     username: sa
     password: qwe123!
     driver: net.sourceforge.jtds.jdbc.Driver
+  customs:
+    url: https://www.hsbianma.com

@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>HS查询</title>
+  <link rel="stylesheet" href="../static/css/index.css" />
+
+  <link rel="stylesheet" href="../static/css/HSCode.css" />
+  <link rel="stylesheet" href="../static/css/bootstrap.min.css" />
+
+  <link rel="stylesheet" href="../static/css/HSCodeInfo.css" />
+  
+  
+  <style>
+    .body-container {
+      padding: 40px 40px 10px;
+      height: calc(100% - 50px);
+      overflow: hidden;
+      display: flex;
+      flex-flow: column nowrap;
+      justify-content: space-between;
+    }
+
+    .loading-view {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background-color: rgba(255, 255, 255, 0.5);
+      display: none;
+      justify-content: center;
+      align-items: center;
+    }
+
+    .loader {
+      border: 12px solid #f3f3f3;
+      /* Light grey */
+      border-top: 12px solid #3498db;
+      /* Blue */
+      border-radius: 50%;
+      width: 45px;
+      height: 45px;
+      animation: spin 2s linear infinite;
+    }
+
+    @keyframes spin {
+      0% {
+        transform: rotate(0deg);
+      }
+
+      100% {
+        transform: rotate(360deg);
+      }
+    }
+
+    .search-box {
+      display: flex;
+      flex-flow: row nowrap;
+      justify-content: center;
+      align-items: center;
+    }
+
+    .search-box input {
+      flex: 1;
+      margin-right: 16px;
+      padding: 0 16px;
+      height: 36px;
+      background-color: rgba(255, 255, 255, .8);
+      border-radius: 10.5px;
+      color: #000;
+      border: none;
+      font-size: 16px;
+    }
+
+    .search-box input:focus {
+      border: none !important;
+      outline: none;
+    }
+
+    .search-box .search-btn {
+      color: rgb(0, 122, 255);
+      font-weight: bold;
+      cursor: pointer;
+      padding: 5px 12px;
+      border-radius: 5px;
+    }
+
+    #content {
+      flex: 1;
+      overflow: scroll;
+      margin: 20px 0;
+      background-color: #fff;
+      border-radius: 10px;
+      padding: 10px;
+      position: relative;
+    }
+
+    #content .result {
+      border-collapse: collapse;
+      line-height: 16px;
+    }
+
+    #content .result td,
+    th {
+      font-size: 12px;
+    }
+
+    #content .result tbody .head-row {
+      font-weight: bold;
+      border-bottom: 2px solid #3b4560;
+    }
+
+    .result-grid td {
+      border-bottom: 1px solid #dddddd;
+      vertical-align: middle;
+      padding: 5px 5px 6px;
+    }
+
+    #content #empty-tip {
+      color: #b0b0b0;
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      transform: translate(-50%, -50%);
+    }
+
+    #content {
+      width: 100%;
+      overflow-x: auto;
+      max-width: 1200px;/
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    th,
+    td {
+      /* padding: 8px; */
+      text-align: left;
+      border: 1px solid #ccc;
+      /* width: auto; */
+    }
+
+    th {
+      background-color: #f2f2f2;
+    }
+  </style>
+  <!-- <script src="../static/js/flexible.js"></script> -->
+</head>
+
+<body>
+  <div class="background"></div>
+  <div class="loading-view">
+    <div class="loader"></div>
+  </div>
+  <div class="body-container">
+    <div class="search-box">
+      <input type="text" id="search-input" placeholder="请输入品名" />
+      <div class="search-btn" onclick="handleSearchList()">查询</div>
+    </div>
+    <div id="content">
+      <span id="empty-tip">暂无数据</span>
+    </div>
+    <footer>
+      <p class="company-name">上海品客国际物流有限公司</p>
+      <p class="company-name-english">
+        Shanghai Pinke International Logistics Co. Ltd
+      </p>
+    </footer>
+  </div>
+  
+  <script>
+    var targetDiv = document.getElementById("content");
+    var searchInput = document.getElementById("search-input");
+    var emptyTip = document.getElementById("empty-tip");
+    let ele = document.querySelector(".loading-view");
+    let prefix = 'http://3.89.216.190:8771'
+    function handleSearchList() {
+      // ele.style.display = "flex";
+
+      const params = {
+        keywords: searchInput.value.trim(),
+        filterFailureCode: true, // 过滤过期编码
+        displayenname: true // 是否显示英文名
+      };
+      const url = `/cityPost/getCustoms?keywords=${params.keywords}`;//&displayenname=${params.displayenname}&filterFailureCode=${params.filterFailureCode}
+      fetch(prefix+url, {
+        method: "GET"
+      })
+        .then(response => response.json())
+        .then(responseText => {
+          responseText.data = `<table> ${responseText.data} </table>`
+          targetDiv.innerHTML = responseText.data
+          const allLinks = document.querySelectorAll('a');
+          console.log(allLinks);
+          // 为每个a标签添加点击事件监听器
+          allLinks.forEach(link => {
+            link.addEventListener('click', event => {
+              event.preventDefault();
+              var match = event.target.href.match(/\/Code\/(\d+)\.html/);
+              if (match) {
+                var number = match[1];
+                console.log(number); // 输出：4202129000
+                 handleGetDetail(number)
+              }
+            });
+          });
+          // targetDiv.innerHTML = ''
+          // console.log(responseText.data);
+          // const parser = new DOMParser();
+          // const doc = parser.parseFromString(responseText.data, "text/html");
+          // var firstResultElement = doc.querySelectorAll(".result");
+          // console.log(doc, firstResultElement);
+          // if (!firstResultElement) {
+          //   return;
+          // }
+          // const fragment = document.createDocumentFragment();
+          // firstResultElement.forEach(resultElement => {
+          //   var newResultElement = resultElement.cloneNode(true);
+          //   fragment.appendChild(newResultElement);
+          // });
+          // targetDiv.appendChild(fragment);
+          // ele.style.display = "none";
+          // emptyTip.style.display = "none";
+          // // 显示英文名
+          // var elements = document.querySelectorAll(
+          //   '[id^="insenname-"], [id*=" insenname-"]'
+          // );
+          // elements.forEach(function (element) {
+          //   element.style.display = "block";
+          //   element.style.color = "color";
+          // });
+
+          // var links = document.getElementsByTagName("a");
+          // for (var i = 0; i < links.length; i++) {
+          //   links[i].addEventListener("click", event => {
+          //     event.preventDefault();
+          //     const url_suffix = event.target.getAttribute("href");
+          //     handleGetDetail(url_suffix);
+          //   });
+          // }
+
+          // ele.style.display = "none";
+          // emptyTip.style.display = "none";
+        })
+        .catch(error => {
+          ele.style.display = "none";
+          emptyTip.style.display = "block";
+          console.error("Error:", error);
+        });
+    }
+
+    function handleGetDetail(event) {
+      const url = `http://3.89.216.190:8771/cityPost/getCustomsDetails?productCode=${event}`;
+      fetch(url, {
+        method: "GET"
+      })
+        .then(response => response.json())
+        .then(responseText => {
+          targetDiv.innerHTML = responseText.data
+          // const parser = new DOMParser();
+          // const doc = parser.parseFromString(responseText, "text/html");
+          // var firstResultElement = doc.querySelectorAll("#code-info");
+
+          // if (!firstResultElement) {
+          //   return;
+          // }
+          // // 移除列表
+          // var elements = document.getElementsByClassName("result");
+          // for (var i = elements.length - 1; i >= 0; i--) {
+          //   elements[i].remove();
+          // }
+
+          // firstResultElement.forEach(resultElement => {
+          //   var newResultElement = resultElement.cloneNode(true);
+          //   targetDiv.appendChild(newResultElement);
+          // });
+          // ele.style.display = "none";
+          // emptyTip.style.display = "none";
+        })
+        .catch(error => {
+          ele.style.display = "none";
+          emptyTip.style.display = "block";
+          console.error("Error:", error);
+        });
+    }
+  </script>
+</body>
+
+</html>

@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.xihe.entity.CheckHome;
 import com.xihe.entity.Result;
 import com.xihe.services.CityPostService;
+import com.xihe.services.CustomsService;
 import com.xihe.services.impl.FedexFuel;
 import com.xihe.services.impl.FuelImpl;
 import com.xihe.services.impl.UpsFuel;
@@ -34,6 +35,8 @@ public class CityPostController {
     FuelImpl fuel;
     @Resource
     CityPostService cityPostService;
+    @Resource
+    CustomsService customsService;
 
     @Operation(summary = "根据省/州判断地址中是否存在,若存在则切割地址组")
     @PostMapping(value = "/interceptAddress")
@@ -70,13 +73,23 @@ public class CityPostController {
     }
 
     @RequestMapping("/index")
-    public String CommercialResidence() {
+    public String index() {
         return "index";
     }
 
     @RequestMapping("/fuel")
     public String fuel() {
         return "fuel";
+    }
+
+    @RequestMapping("/customsCode")
+    public String customsCode() {
+        return "customsCode";
+    }
+
+    @RequestMapping("/CommercialResidence")
+    public String CommercialResidence() {
+        return "CommercialResidence";
     }
 
     @GetMapping("/test")
@@ -97,6 +110,20 @@ public class CityPostController {
     @ResponseBody
     public Result<List<String>> getCountryCombinationInfoList(@PathVariable String statCode) {
         return Result.success(cityPostService.getCountryCombinationInfoList(statCode));
+    }
+
+    @Operation(summary = "根据关键字查询海关编码")
+    @GetMapping(value = "/getCustoms")
+    @ResponseBody
+    public Result<String> getCustoms(@Parameter(description = "关键字") String keywords) {
+        return Result.success(customsService.getCustoms(keywords));
+    }
+
+    @Operation(summary = "查询海关编码详情")
+    @GetMapping(value = "/getCustomsDetails")
+    @ResponseBody
+    public Result<String> getCustomsDetails(@Parameter(description = "商品编码") String productCode) {
+        return Result.success(customsService.getCustomsDetails(productCode));
     }
 
 }
