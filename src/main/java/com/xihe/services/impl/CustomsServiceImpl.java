@@ -25,8 +25,7 @@ public class CustomsServiceImpl implements CustomsService {
 
         try{
             Document doc = Jsoup.connect(customsUrl + "/search?Keywords=" + keywords + "&displayenname=true").get();
-            String result = doc.getElementsByClass("result").html();
-            return result;
+            return doc.getElementsByClass("result").html();
         }catch (Exception e){
             throw new RuntimeException("海关编码查询异常：{}", e);
         }
