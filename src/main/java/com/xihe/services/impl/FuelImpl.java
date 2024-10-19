@@ -42,6 +42,30 @@ public class FuelImpl {
     private static final SimpleDateFormat dhlDateFormat = new SimpleDateFormat("yyyy/MM");
 
     /**
+     * 取出查询出燃油中最小的日期
+     *
+     * @param resolveFuel 已经查询出的燃油
+     * @return java.util.Date
+     * @author gzy
+     * @date 2024/10/18 19:02
+     */
+    private Date getMinDate(Map<String, List<Fuel>> resolveFuel, String fuelKey) {
+        //先把所有的日期转成Date
+        List<Date> fuelDateList = new ArrayList<>();
+        for (String key : resolveFuel.keySet()) {
+            String date = resolveFuel.get(key).get(0).getFuelDate();
+            try {
+                Date tempDate = thirdDateFormat.parse(date);
+                fuelDateList.add(tempDate);
+            } catch (ParseException e) {
+                throw new RuntimeException("获取" + fuelKey + "燃油时，日期格式校验失败！");
+            }
+        }
+        //取最小的日期
+        return Collections.min(fuelDateList);
+    }
+
+    /**
      * 解析燃油的日期格式，当在周一的时候校验是否需要更新，若获取到的燃油时间为7天前的时间则返回1个小时的缓存时间，否则返回到下周一的时间
      *
      * @param fuelKey  燃油类型
@@ -77,7 +101,45 @@ public class FuelImpl {
             Date nextWeekMonday = DateUtil.getNextWeekMonday(nowDate);
             long nextMondayTime = nextWeekMonday.getTime();
             if (tempRateTime >= nextMondayTime) {
-                return DateUtil.getDifference(new Date(), nextWeekMonday) / 1000 + (5 * 24 * 60 * 60);
+                return DateUtil.getDifference(new Date(), nextWeekMonday) / 1000 + (4 * 24 * 60 * 60);
+            }
+        } else {                //dhl
+            long nextMonthDayTime = DateUtil.getNextMonthDay().getTime();
+            if (tempRateTime >= nextMonthDayTime) {
+                return DateUtil.getMonthDifference(2) - (4 * 24 * 60 * 60);
+            }
+        }
+        return difference;
+    }
+
+    /**
+     * 解析燃油的日期格式，当在周一的时候校验是否需要更新，若获取到的燃油时间为7天前的时间则返回1个小时的缓存时间，否则返回到下周一的时间
+     *
+     * @param fuelKey  燃油类型
+     * @param rateDate 当前燃油类型获取到网站中的最小日期时间
+     * @return long
+     * @author gzy
+     * @date 2024/10/18 19:04
+     */
+    private long getCacheTime(String fuelKey, Date rateDate) {
+        //大于7天表示还未到更新时间，则每个小时更新一次
+        long expireTime = 5;
+        if ("dhl".equals(fuelKey)) {
+            expireTime = 30;
+        }
+        long tempRateTime = rateDate.getTime();
+        long difference = 3600L * 5;
+        if (5 == expireTime) {  //ups、fedex
+            /*
+             * 这里校验当前时间和下周一的时间进行比较
+             * 1、获取到的时间小于下周一的时间，则表示未更新到，则5个小时后继续更新
+             * 2、若获取到的时间大于下周一的时间，则缓存时间为当前时间距离下周五0点的时间
+             */
+            Date nowDate = new Date();
+            Date nextWeekMonday = DateUtil.getNextWeekMonday(nowDate);
+            long nextMondayTime = nextWeekMonday.getTime();
+            if (tempRateTime >= nextMondayTime) {
+                return DateUtil.getDifference(new Date(), nextWeekMonday) / 1000 + (4 * 24 * 60 * 60);
             }
         } else {                //dhl
             long nextMonthDayTime = DateUtil.getNextMonthDay().getTime();
@@ -123,11 +185,13 @@ public class FuelImpl {
             for (String key : resolveFuel.keySet()) {
                 hashOperations.put(fuelKey + "--fuel", key, objectNode.get(key).toString());
             }
-            String fuelDate = resolveFuel.get("cn").get(0).getFuelDate();
-            if (null == fuelDate) {
+            Date minDate = getMinDate(resolveFuel, fuelKey);
+//            String fuelDate = resolveFuel.get("cn").get(0).getFuelDate();
+            if (null == minDate) {
                 throw new RuntimeException("获取" + fuelKey + "燃油失败！");
             }
-            long difference = getCacheTime(fuelKey, fuelDate);
+//            long difference = getCacheTime(fuelKey, fuelDate);
+            long difference = getCacheTime(fuelKey, minDate);
             log.info("获取{}燃油成功，添加缓存时间为：{}！", fuelKey, difference);
             stringRedisTemplate.expire(fuelKey + "--fuel", difference, TimeUnit.SECONDS);
             return objectNode;
@@ -324,5 +388,21 @@ public class FuelImpl {
 //        log.info("获取第三方燃油成功，添加缓存时间为：{}！", difference);
 //        valueOperations.set("all--fuel", backJson.toString(), difference, TimeUnit.SECONDS);
 //        return backJson;
+    }
+
+    public static void main(String[] args) {
+        String[] strArr = new String[]{"2024/10/14", "2024/10/18", "2024/10/12"};
+        List<Date> list = new ArrayList<>();
+        //先把所有的日期转成Date
+        for (String str : strArr) {
+            try {
+                list.add(thirdDateFormat.parse(str));
+            } catch (ParseException e) {
+                throw new RuntimeException(e);
+            }
+        }
+        //取最小的日期
+        Date minDate = Collections.min(list);
+        System.out.println(minDate);
     }
 }
