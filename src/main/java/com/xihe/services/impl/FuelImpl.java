@@ -138,8 +138,15 @@ public class FuelImpl {
             Date nowDate = new Date();
             Date nextWeekMonday = DateUtil.getNextWeekMonday(nowDate);
             long nextMondayTime = nextWeekMonday.getTime();
+            /*
+             * 当在周五到下周一之前提前获取到燃油时
+             * 还有极少数的情况是，但在周一、周二才更新的燃油，这个时候也要重新计算缓存时间，不能5小时一直刷
+             * 计算方式为若获取到的燃油最小时间加7天的话超过下周一的时间表示新燃油已经更新，否则旧燃油+7必定小于下周一
+             */
             if (tempRateTime >= nextMondayTime) {
                 return DateUtil.getDifference(new Date(), nextWeekMonday) / 1000 + (4 * 24 * 60 * 60);
+            } else if (tempRateTime + 7 * 24 * 60 * 60 * 1000 >= nextMondayTime) {
+                return DateUtil.getDifference(new Date(), nextWeekMonday) / 1000 - (3 * 24 * 60 * 60);
             }
         } else {                //dhl
             long nextMonthDayTime = DateUtil.getNextMonthDay().getTime();
@@ -391,7 +398,7 @@ public class FuelImpl {
     }
 
     public static void main(String[] args) {
-        String[] strArr = new String[]{"2024/10/14", "2024/10/18", "2024/10/12"};
+        String[] strArr = new String[]{"2024/10/14", "2024/10/21", "2024/10/21"};
         List<Date> list = new ArrayList<>();
         //先把所有的日期转成Date
         for (String str : strArr) {
@@ -404,5 +411,8 @@ public class FuelImpl {
         //取最小的日期
         Date minDate = Collections.min(list);
         System.out.println(minDate);
+
+        long difference = new FuelImpl().getCacheTime("ups", minDate);
+        System.out.println(difference);
     }
 }
