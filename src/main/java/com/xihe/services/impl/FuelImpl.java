@@ -40,6 +40,8 @@ public class FuelImpl {
     private static final SimpleDateFormat thirdDateFormat = new SimpleDateFormat("yyyy/MM/dd");
     //    private static final SimpleDateFormat upsDateFormat = new SimpleDateFormat("dd/MM/yyyy");
     private static final SimpleDateFormat dhlDateFormat = new SimpleDateFormat("yyyy/MM");
+    //最小刷新时间
+    private static final long differenceTime = 3600L * 5;
 
     /**
      * 取出查询出燃油中最小的日期
@@ -90,7 +92,6 @@ public class FuelImpl {
         }
         assert rateDate != null;
         long tempRateTime = rateDate.getTime();
-        long difference = 3600L * 5;
         if (5 == expireTime) {  //ups、fedex
             /*
              * 这里校验当前时间和下周一的时间进行比较
@@ -109,7 +110,7 @@ public class FuelImpl {
                 return DateUtil.getMonthDifference(2) - (4 * 24 * 60 * 60);
             }
         }
-        return difference;
+        return differenceTime;
     }
 
     /**
@@ -128,7 +129,6 @@ public class FuelImpl {
             expireTime = 30;
         }
         long tempRateTime = rateDate.getTime();
-        long difference = 3600L * 5;
         if (5 == expireTime) {  //ups、fedex
             /*
              * 这里校验当前时间和下周一的时间进行比较
@@ -138,6 +138,7 @@ public class FuelImpl {
             Date nowDate = new Date();
             Date nextWeekMonday = DateUtil.getNextWeekMonday(nowDate);
             long nextMondayTime = nextWeekMonday.getTime();
+            String week = DateUtil.getDayOfWeekString(nowDate);
             /*
              * 当在周五到下周一之前提前获取到燃油时
              * 还有极少数的情况是，但在周一、周二才更新的燃油，这个时候也要重新计算缓存时间，不能5小时一直刷
@@ -145,7 +146,7 @@ public class FuelImpl {
              */
             if (tempRateTime >= nextMondayTime) {
                 return DateUtil.getDifference(new Date(), nextWeekMonday) / 1000 + (4 * 24 * 60 * 60);
-            } else if (tempRateTime + 7 * 24 * 60 * 60 * 1000 >= nextMondayTime) {
+            } else if (tempRateTime + 7 * 24 * 60 * 60 * 1000 >= nextMondayTime && ("星期一".equals(week) || "星期二".equals(week))) {
                 return DateUtil.getDifference(new Date(), nextWeekMonday) / 1000 - (3 * 24 * 60 * 60);
             }
         } else {                //dhl
@@ -154,7 +155,27 @@ public class FuelImpl {
                 return DateUtil.getMonthDifference(2) - (4 * 24 * 60 * 60);
             }
         }
-        return difference;
+        return differenceTime;
+    }
+
+    /**
+     * 因为存在不同的接口，且fedex是通过浏览器抓取，所以存在异常情况，当出现异常情况时，直接返回5小时的缓存时间
+     *
+     * @param resolveFuel 解析到的燃油
+     * @param fuelKey     燃油KEY，ups、fedex、dhl
+     * @return long
+     * @author gzy
+     * @date 2024/10/25 18:05
+     */
+    private long getCacheTime(Map<String, List<Fuel>> resolveFuel, String fuelKey) {
+        if (resolveFuel.isEmpty() || resolveFuel.size() == 1) {
+            return 0;
+        }
+        Date minDate = getMinDate(resolveFuel, fuelKey);
+        if (null == minDate) {
+            throw new RuntimeException("获取" + fuelKey + "燃油失败！");
+        }
+        return getCacheTime(fuelKey, minDate);
     }
 
     public JsonNode getCommonFuel(String fuelKey) {
@@ -192,15 +213,11 @@ public class FuelImpl {
             for (String key : resolveFuel.keySet()) {
                 hashOperations.put(fuelKey + "--fuel", key, objectNode.get(key).toString());
             }
-            Date minDate = getMinDate(resolveFuel, fuelKey);
-//            String fuelDate = resolveFuel.get("cn").get(0).getFuelDate();
-            if (null == minDate) {
-                throw new RuntimeException("获取" + fuelKey + "燃油失败！");
-            }
-//            long difference = getCacheTime(fuelKey, fuelDate);
-            long difference = getCacheTime(fuelKey, minDate);
+            long difference = getCacheTime(resolveFuel, fuelKey);
             log.info("获取{}燃油成功，添加缓存时间为：{}！", fuelKey, difference);
-            stringRedisTemplate.expire(fuelKey + "--fuel", difference, TimeUnit.SECONDS);
+            if (0 != difference) {
+                stringRedisTemplate.expire(fuelKey + "--fuel", difference, TimeUnit.SECONDS);
+            }
             return objectNode;
         }
 
@@ -221,6 +238,8 @@ public class FuelImpl {
         JsonNode dhl = getCommonFuel("dhl");
         JSONArray backArr = new JSONArray();
         JSONObject upsJson = new JSONObject();
+        int subIndex = 5;
+        String str = "-";
         if (!ups.isEmpty()) {
             JSONArray upsList = new JSONArray();
 
@@ -235,8 +254,12 @@ public class FuelImpl {
                     tempJson.put("communs2", jsonNode.get("fuel4").asText());
                     tempJson.put("communs3", jsonNode.get("fuel1").asText());
                     tempJson.put("communs4", jsonNode.get("fuel2").asText());
-                    tempJson.put("communs5", jsonNode.get("fuel5").asText());
-                    tempJson.put("ratetime", jsonNode.get("fuelDate").asText().substring(2));
+                    String communs5 = jsonNode.get("fuel5").asText();
+                    if (0 == communs5.length()) {
+                        communs5 = str;
+                    }
+                    tempJson.put("communs5", communs5);
+                    tempJson.put("ratetime", jsonNode.get("fuelDate").asText().substring(subIndex));
                     rateList.add(tempJson);
                 }
                 cnJson.put("rateList", rateList);
@@ -252,9 +275,10 @@ public class FuelImpl {
                     JSONObject tempJson = new JSONObject();
                     tempJson.put("communs1", jsonNode.get("fuel1").asText());
                     tempJson.put("communs2", jsonNode.get("fuel1").asText());
-                    tempJson.put("communs3", "");
-                    tempJson.put("communs4", "");
-                    tempJson.put("ratetime", jsonNode.get("fuelDate").asText().substring(2));
+                    tempJson.put("communs3", str);
+                    tempJson.put("communs4", str);
+                    tempJson.put("communs5", str);
+                    tempJson.put("ratetime", jsonNode.get("fuelDate").asText().substring(subIndex));
                     rateList.add(tempJson);
                 }
                 cnJson.put("rateList", rateList);
@@ -287,7 +311,8 @@ public class FuelImpl {
                     tempJson.put("communs2", jsonNode.get("fuel2").asText());
                     tempJson.put("communs3", jsonNode.get("fuel3").asText());
                     tempJson.put("communs4", jsonNode.get("fuel4").asText());
-                    tempJson.put("ratetime", jsonNode.get("fuelDate").asText().substring(2));
+                    tempJson.put("communs5", str);
+                    tempJson.put("ratetime", jsonNode.get("fuelDate").asText().substring(subIndex));
                     rateList.add(tempJson);
                 }
                 cnJson.put("rateList", rateList);
@@ -303,9 +328,10 @@ public class FuelImpl {
                     JSONObject tempJson = new JSONObject();
                     tempJson.put("communs1", jsonNode.get("fuel1").asText());
                     tempJson.put("communs2", jsonNode.get("fuel1").asText());
-                    tempJson.put("communs3", "");
-                    tempJson.put("communs4", "");
-                    tempJson.put("ratetime", jsonNode.get("fuelDate").asText().substring(2));
+                    tempJson.put("communs3", str);
+                    tempJson.put("communs4", str);
+                    tempJson.put("communs5", str);
+                    tempJson.put("ratetime", jsonNode.get("fuelDate").asText().substring(subIndex));
                     rateList.add(tempJson);
                 }
                 cnJson.put("rateList", rateList);
@@ -335,9 +361,10 @@ public class FuelImpl {
                     JSONObject tempJson = new JSONObject();
                     tempJson.put("communs1", jsonNode.get("fuel1").asText());
                     tempJson.put("communs2", jsonNode.get("fuel2").asText());
-                    tempJson.put("communs3", "");
-                    tempJson.put("communs4", "");
-                    tempJson.put("ratetime", jsonNode.get("fuelDate").asText().substring(2));
+                    tempJson.put("communs3", str);
+                    tempJson.put("communs4", str);
+                    tempJson.put("communs5", str);
+                    tempJson.put("ratetime", jsonNode.get("fuelDate").asText().substring(subIndex));
                     rateList.add(tempJson);
                 }
                 cnJson.put("rateList", rateList);
@@ -353,9 +380,10 @@ public class FuelImpl {
                     JSONObject tempJson = new JSONObject();
                     tempJson.put("communs1", jsonNode.get("fuel1").asText());
                     tempJson.put("communs2", jsonNode.get("fuel1").asText());
-                    tempJson.put("communs3", "");
-                    tempJson.put("communs4", "");
-                    tempJson.put("ratetime", jsonNode.get("fuelDate").asText().substring(2));
+                    tempJson.put("communs3", str);
+                    tempJson.put("communs4", str);
+                    tempJson.put("communs5", str);
+                    tempJson.put("ratetime", jsonNode.get("fuelDate").asText().substring(subIndex));
                     rateList.add(tempJson);
                 }
                 cnJson.put("rateList", rateList);

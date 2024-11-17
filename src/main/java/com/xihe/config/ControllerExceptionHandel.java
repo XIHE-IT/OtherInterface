@@ -22,28 +22,28 @@ public class ControllerExceptionHandel {
 
     @ExceptionHandler(ValidationException.class)
     public Result<String> handleException(ValidationException e) {
-//        e.printStackTrace();
+        e.printStackTrace();
         log.error("参数校验发生异常:{}", e.getMessage());
         return Result.failure(HttpStatus.BAD_REQUEST.value(), e.getMessage());
     }
 
     @ExceptionHandler(value = NullPointerException.class)
     public Result<String> exceptionHandler(NullPointerException e) {
-//        e.printStackTrace();
+        e.printStackTrace();
         log.error("空指针异常:{}", e.getMessage());
         return Result.failure(HttpStatus.INTERNAL_SERVER_ERROR.value(), e.getMessage());
     }
 
     @ExceptionHandler(value = {Exception.class, RuntimeException.class})
     public Result<String> exceptionHandler(Exception e) {
-//        e.printStackTrace();
+        e.printStackTrace();
         log.error("运行时发生异常:{}", e.getMessage());
         return Result.failure(HttpStatus.INTERNAL_SERVER_ERROR.value(), e.getMessage());
     }
 
     @ExceptionHandler(AsyncRequestTimeoutException.class)
     public Result<String> handException(AsyncRequestTimeoutException e) {
-//        e.printStackTrace();
+        e.printStackTrace();
         log.error("运行时超时异常:{}", e.getMessage());
         return Result.failure(HttpStatus.BAD_REQUEST.value(), e.getMessage());
     }

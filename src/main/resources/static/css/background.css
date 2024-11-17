@@ -1,0 +1,54 @@
+.background {
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  width: 100%;
+  height: 4.8649rem;
+  background: url("../img/background.png");
+  background-repeat: no-repeat;
+  background-position: center center;
+  background-size: cover;
+  opacity: 0.9;
+}
+
+.background footer {
+  position: absolute;
+  width: 100%;
+  left: 0;
+  right: 0;
+  bottom: 0.2703rem;
+}
+
+.background footer .footer-model {
+  width: 100%;
+  position: absolute;
+  flex-flow: column nowrap;
+  bottom: 0;
+  left: 0;
+  right: 0;
+}
+
+.background footer .footer-model > div {
+  display: flex;
+  padding: 0rem 0.4054rem;
+  justify-content: space-between;
+  align-items: end;
+  margin-top: 0.0811rem;
+  color: #fff;
+}
+
+.background footer div .sp-font1 {
+  font-size: 0.2162rem;
+}
+
+.background footer div .sp-font2 {
+  font-size: 0.2703rem;
+}
+
+.background footer div .sp-font3 {
+  font-size: 0.3243rem;
+}
+
+.background footer div .sp-font4 {
+  font-size: 0.2162rem;
+}

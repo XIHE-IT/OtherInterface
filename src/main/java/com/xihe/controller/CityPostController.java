@@ -18,6 +18,7 @@ import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.UUID;
 
 /**
  * @Author gzy
@@ -26,6 +27,7 @@ import java.util.List;
 @Controller
 @RequestMapping("/cityPost")
 @Tag(name = "偏远")
+@CrossOrigin
 public class CityPostController {
     @Resource
     UpsFuel upsFuel;
@@ -87,9 +89,9 @@ public class CityPostController {
         return "customsCode";
     }
 
-    @RequestMapping("/CommercialResidence")
+    @RequestMapping("/commercialResidence")
     public String CommercialResidence() {
-        return "CommercialResidence";
+        return "commercialResidence";
     }
 
     @GetMapping("/test")
@@ -126,4 +128,8 @@ public class CityPostController {
         return Result.success(customsService.getCustomsDetails(productCode));
     }
 
+
+    public static void main(String[] args) {
+        System.out.println(UUID.randomUUID().toString().replace("-", ""));
+    }
 }

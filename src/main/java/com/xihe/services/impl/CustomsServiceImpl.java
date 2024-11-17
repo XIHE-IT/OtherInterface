@@ -3,7 +3,6 @@ package com.xihe.services.impl;
 import com.xihe.services.CustomsService;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
@@ -17,16 +16,15 @@ import java.io.IOException;
 @Service
 public class CustomsServiceImpl implements CustomsService {
 
-    @Value("${other.customs.url}")
-    private String customsUrl;
+    private static final String customsUrl = "https://www.hsbianma.com";
 
     @Override
     public String getCustoms(String keywords) {
 
-        try{
+        try {
             Document doc = Jsoup.connect(customsUrl + "/search?Keywords=" + keywords + "&displayenname=true").get();
             return doc.getElementsByClass("result").html();
-        }catch (Exception e){
+        } catch (Exception e) {
             throw new RuntimeException("海关编码查询异常：{}", e);
         }
 
@@ -35,20 +33,20 @@ public class CustomsServiceImpl implements CustomsService {
     @Override
     public String getAllCustoms(String keywords) {
 
-        try{
+        try {
             // 获取第一页的内容作为起点
-            Document doc = getPageContent(keywords,1);
+            Document doc = getPageContent(keywords, 1);
 
             // 从起点页面获取总页数
             int maxPageSize = getTotalPages(doc);
 
             // 爬取所有页面的内容
             for (int i = 1; i <= maxPageSize; i++) {
-                Document page = getPageContent(keywords,i);
+                Document page = getPageContent(keywords, i);
                 System.out.println(page.getElementsByClass("result").html());
             }
             return "";
-        }catch (Exception e){
+        } catch (Exception e) {
             throw new RuntimeException("海关编码详情查询异常：{}", e);
         }
 
@@ -57,10 +55,10 @@ public class CustomsServiceImpl implements CustomsService {
     @Override
     public String getCustomsDetails(String productCode) {
 
-        try{
+        try {
             Document doc = Jsoup.connect(customsUrl + "/Code/" + productCode + ".html").get();
             return doc.getElementById("code-info").html();
-        }catch (Exception e){
+        } catch (Exception e) {
             throw new RuntimeException("海关编码查询异常：{}", e);
         }
 
@@ -76,7 +74,7 @@ public class CustomsServiceImpl implements CustomsService {
      */
     private Document getPageContent(String keywords, int i) throws IOException {
 
-        return Jsoup.connect(customsUrl + "/search/" +i+ "?Keywords=" + keywords + "&displayenname=true").get();
+        return Jsoup.connect(customsUrl + "/search/" + i + "?Keywords=" + keywords + "&displayenname=true").get();
 
     }
 

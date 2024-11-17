@@ -9,9 +9,9 @@ import lombok.Data;
 @Data
 public class Company {
     //公司编码
-    private String companyid;
+    private String companyCode;
     //公司简称
-    private String shortname;
+    private String shortName;
     //地址
     private String url;
 }

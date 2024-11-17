@@ -1,0 +1,890 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>地址校验</title>
+    <link rel="stylesheet" href="../static/css/background.css" />
+    <link rel="stylesheet" href="../static/css/index.css" />
+    <script src="../static/js/flexible.js"></script>
+    <style>
+      .address-container {
+        position: relative;
+        height: calc(100% - 1.2rem);
+        overflow-y: auto;
+        display: flex;
+        flex-flow: column nowrap;
+        padding-bottom: 1.2rem;
+        /* background-color: #fff; */
+      }
+      #myRecog {
+        margin-bottom: 0.15rem;
+        font-size: 0.2703rem;
+        padding: 0.5405rem;
+        background-color: #fff;
+      }
+      .myRecog-content {
+        background-color: #f4f4f4;
+        display: flex;
+        flex-direction: column;
+        padding: 0.2703rem;
+        border-radius: 0.2703rem;
+        border: 1px solid #e1e0e0;
+      }
+      #myRecog textarea {
+        padding: 0.0811rem;
+        width: 100%;
+        background-color: #f4f4f4;
+      }
+      #myRecog input::placeholder {
+        font-size: 0.3243rem;
+        padding: 0.2703rem;
+        color: #ccc;
+      }
+      #myRecog .myRecog-bottom {
+        display: flex;
+        justify-content: end;
+      }
+      #myRecog .myRecog-bottom .fun-category {
+        border: 0.027rem solid #ccc;
+        display: flex;
+        border-radius: 0.4324rem;
+      }
+      #myRecog .myRecog-bottom .fun-category .fun-category-item {
+        padding: 0.1081rem 0.2703rem;
+        height: 0.4324rem;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+      }
+      #myRecog .myRecog-bottom .fun-category .fun-category-item img {
+        width: 0.2703rem;
+        margin-right: 0.0541rem;
+      }
+      #myRecog .myRecog-bottom .fun-btn {
+        background-color: #fe5c11;
+        color: #fff;
+        height: 0.4324rem;
+        border-radius: 0.4324rem;
+        padding: 0.1081rem 0.503rem;
+        cursor: pointer;
+      }
+
+      #myForm .form-content {
+        background-color: #ffffff;
+        /* padding: 0.2703rem; */
+        /* border-radius: 0.2703rem; */
+        /* box-shadow: 0.027rem 0.027rem 0.1351rem 0.0541rem rgba(0, 0, 0, 0.2); */
+        z-index: 100;
+      }
+      #myForm .form-content .form-item {
+        position: relative;
+        background-color: #fff;
+        padding: 0 0.2703rem;
+      }
+      #myForm .form-content .form-item-border::after {
+        content: ""; /* 生成一个空内容 */
+        position: absolute; /* 绝对定位 */
+        left: 0.2703rem; /* 左对齐 */
+        right: 0; /* 右对齐 */
+        bottom: 0; /* 底部对齐 */
+        height: 0.027rem; /* 边框高度 */
+        width: calc(100% - 0.54rem);
+        background-color: #d8d8d8;
+      }
+      #myForm .form-content .form-item > div {
+        background-color: #fff;
+        /* padding: 0 0.2703rem; */
+      }
+
+      #myForm .explain-model {
+        padding: 0 0.2703rem;
+        font-size: 0.2703rem;
+        color: #a8a8a8;
+        line-height: 0.4324rem;
+        background-color: #fff;
+        margin-bottom: 0.2703rem;
+      }
+      #myForm .explain-model .top {
+        color: #fe5c11;
+      }
+      #myForm .button-model {
+        width: 100%;
+        display: flex;
+        justify-content: space-around;
+        padding: 0.27rem 0;
+        background-color: #fff;
+      }
+      #myForm .button-model button {
+        line-height: 0.8108rem;
+        border-radius: 0.2162rem;
+        border: 0.027rem solid #fe5c11;
+      }
+      #myForm .button-model .reset-btn {
+        width: 35%;
+        background-color: #fff;
+        color: #fe5c11;
+      }
+      #myForm .button-model .submit-btn {
+        width: 60%;
+        background-color: #fe5c11;
+        color: #fff;
+      }
+      #myForm .content {
+        font-weight: 600;
+        text-align: center;
+        font-size: 1.0811rem;
+        color: #fe5c11;
+        background-color: #fff;
+      }
+      #myForm .form-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        /* border-bottom: 0.027rem solid #d8d8d8; */
+        line-height: 1.0811rem;
+        font-size: 0.3243rem;
+      }
+
+      #myForm .form-item input::placeholder {
+        text-align: right; /* placeholder 靠右对齐 */
+        font-size: 0.3243rem;
+        color: #757575;
+      }
+      #myForm .form-item textarea::placeholder {
+        text-align: right; /* placeholder 靠右对齐 */
+        font-size: 0.3243rem;
+        color: #757575;
+        padding-top: 0.4865rem;
+      }
+
+      #myForm .form-item label {
+        color: #777777;
+        min-width: 2.7027rem;
+      }
+      #myForm .form-item input {
+        border: none;
+        text-align: right;
+        line-height: 0.6757rem;
+      }
+      #myForm .form-item .select-editable {
+        position: relative;
+      }
+      #myForm .form-item .select-editable > input {
+        text-align: right;
+        line-height: 0.6757rem;
+      }
+      #myForm .form-item input::placeholder {
+        text-align: right; /* placeholder 靠右对齐 */
+        font-size: 0.3243rem;
+        color: #b4b4b4;
+      }
+      #myForm .form-item textarea::placeholder {
+        color: #b4b4b4;
+      }
+
+      .select-editable input {
+        /* position: absolute;
+      top: 0px;
+      left: 0px; */
+        height: 0.9189rem;
+        border: none;
+        font-size: 0.4324rem;
+        line-height: 1;
+        background-color: white;
+      }
+
+      .select-editable select:focus,
+      .select-editable input:focus {
+        outline: none;
+      }
+      .dropdown {
+        border: 0.027rem solid #ccc;
+        display: none; /* 初始隐藏 */
+        position: absolute;
+        background: white;
+        max-height: 4.0541rem;
+        overflow-y: auto;
+        z-index: 1000;
+      }
+      .dropdown-item {
+        padding: 0.2703rem;
+        cursor: pointer;
+      }
+      .dropdown-item:hover {
+        background-color: #f0f0f0;
+      }
+      .dropdown-options {
+        display: none;
+        position: absolute;
+        border-radius: 0.2703rem;
+        top: 0.9459rem;
+        background-color: #f9f9f9;
+        min-width: 4.3243rem;
+        max-height: 10.8108rem;
+        overflow-y: scroll;
+        box-shadow: 0rem 0.1351rem 0.4324rem 0rem rgba(0, 0, 0, 0.3);
+        z-index: 1;
+      }
+      .dropdown-option {
+        line-height: 0.5405rem;
+        font-size: 0.3243rem;
+        padding-left: 0.5405rem;
+      }
+
+      @keyframes spin {
+        0% {
+          transform: rotate(0deg);
+        }
+
+        100% {
+          transform: rotate(360deg);
+        }
+      }
+      .loading-view {
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background-color: rgba(255, 255, 255, 0.5);
+        display: none;
+        justify-content: center;
+        align-items: center;
+        z-index: 100;
+      }
+      .loader {
+        border: 0.3243rem solid #f3f3f3;
+        /* Light grey */
+        border-top: 0.3243rem solid #fe5c11;
+        /* Blue */
+        border-radius: 50%;
+        width: 1.2162rem;
+        height: 1.2162rem;
+        animation: spin 2s linear infinite;
+      }
+      .bottom-explain-model {
+        width: 100%;
+        position: absolute;
+        bottom: 0;
+        padding-bottom: 0.2703rem;
+        background-color: #fff;
+      }
+      .bottom-explain-model > div {
+        padding: 0.2rem 0.2703rem 0;
+        display: flex;
+        justify-content: space-between;
+      }
+      .bottom-explain-model div .sp-font1 {
+        font-size: 0.2162rem;
+      }
+
+      .bottom-explain-model div .sp-font2 {
+        font-size: 0.2703rem;
+      }
+
+      .bottom-explain-model div .sp-font3 {
+        font-size: 0.3243rem;
+      }
+
+      .bottom-explain-model div .sp-font4 {
+        font-size: 0.2162rem;
+      }
+    </style>
+  </head>
+
+  <body style="background-color: #fff">
+    <!-- 背景模块 -->
+    <!-- <div id="my-background" class="background"></div> -->
+    <input
+      type="text"
+      id="hiddenInput"
+      style="position: absolute; left: -270.2432rem"
+    />
+    <div class="address-container">
+      <!-- 表单模块 -->
+      <form id="myForm">
+        <!-- 识别模块 -->
+        <div id="myRecog">
+          <div class="myRecog-content">
+            <textarea
+              placeholder="输入地址自动识别，示例:600 BloomingdaleRd Bloomingdale GA 31302"
+              name="recog"
+              id="recog"
+              cols="42"
+              rows="5"
+              style="resize: none; border: none; height: 1.0811rem"
+            ></textarea>
+            <!-- <div class="myRecog-bottom"></div> -->
+
+            <!-- <div class="fun-category">
+            <div class="fun-category-item">
+              <img src="../static/img/regon.png" alt="图片识别" />
+              图片识别
+            </div>
+            <div class="fun-category-item">
+              <img src="../static/img/ico2.png" alt="语音识别" />
+              语音识别
+            </div>
+            <div class="fun-category-item">
+              <img src="../static//img/address.png" alt="地址码" />
+              地址码
+            </div>
+          </div> -->
+            <div class="myRecog-bottom">
+              <div class="fun-btn" id="getClipboard">识别</div>
+            </div>
+          </div>
+        </div>
+        <div style="height: 0.15rem; background-color: #eeeeee"></div>
+
+        <!-- 表单模块 -->
+        <div class="form-content">
+          <div class="form-item form-item-border">
+            <!-- <div class="form-item-left">服务商</div> -->
+            <label class="form-item-left form-label" for="type">服务商:</label>
+            <select
+              id="type"
+              name="type"
+              class="custom-select"
+              style="border: none"
+            >
+              <option value="ups">UPS</option>
+              <option value="fedex">FEDEX</option>
+            </select>
+          </div>
+
+          <div class="form-item form-item-border">
+            <!-- <div class="form-item-left">国家</div> -->
+            <label class="form-item-left form-label" for="countryCode"
+              >国家:</label
+            >
+            <select
+              id="countryCode"
+              name="countryCode"
+              class="custom-select"
+              style="border: none; padding-right: 0.4865rem"
+            >
+              <option value="US">美国</option>
+            </select>
+          </div>
+
+          <div class="form-item form-item-border">
+            <label class="form-item-left form-label" for="statCode"
+              >FBA仓码:</label
+            >
+            <div
+              class="select-editable"
+              style="height: 100%; line-height: 0.6757rem"
+            >
+              <input
+                type="text"
+                id="statCode"
+                value=""
+                onkeyup="filterOptions()"
+                style="height: 0.6757rem"
+                placeholder="请输入仓码"
+                autocomplete="off"
+                name="statCode"
+                list="FBANameList"
+              />
+
+              <div id="FBANameList" class="dropdown-options"></div>
+            </div>
+          </div>
+
+          <div class="form-item form-item-border">
+            <label for="politicalDivision1">省州:</label>
+            <input
+              placeholder="请输入省州"
+              type="text"
+              id="politicalDivision1"
+              name="politicalDivision1"
+              class="form-input"
+            />
+          </div>
+
+          <div class="form-item form-item-border">
+            <label for="politicalDivision2" class="form-item-left">城市:</label>
+            <input
+              placeholder="请输入城市"
+              type="text"
+              id="politicalDivision2"
+              name="politicalDivision2"
+              class="form-input"
+              style="border: none"
+            />
+          </div>
+          <div class="form-item form-item-border">
+            <label for="postcodePrimaryLow" class="form-item-left">邮编:</label>
+            <input
+              placeholder="请输入邮编"
+              type="text"
+              id="postcodePrimaryLow"
+              name="postcodePrimaryLow"
+              class="form-input"
+              style="border: none"
+            />
+          </div>
+          <div class="form-item">
+            <label for="addressLine" class="form-item-left">地址:</label>
+            <textarea
+              placeholder="请输入地址"
+              name="addressLine"
+              id="addressLine"
+              cols="42"
+              rows="5"
+              style="
+                resize: none;
+                border: none;
+                height: 1.0811rem;
+                padding: 0.1351rem 0;
+              "
+            ></textarea>
+          </div>
+          <div style="height: 0.15rem; background-color: #eeeeee"></div>
+
+          <!-- 按钮模块 -->
+          <div class="button-model">
+            <button class="reset-btn" type="reset" onclick="resetForm()">
+              重置
+            </button>
+            <button class="submit-btn" type="submit">提交</button>
+          </div>
+          <div class="content">
+            <!-- 未知/商业/住宅/混合 -->
+          </div>
+          <!-- 底部说明 -->
+          <div class="explain-model">
+            <div class="top">说明：</div>
+            地址分类有四种：未知、公司、住宅和混合。<br />
+            混合：当某个地点是基于多租户的地址且同时包含公司和住宅单元时。<br />
+            未知：查询非公司、住宅、混合时为未知<br />
+          </div>
+        </div>
+      </form>
+    </div>
+    <div class="loading-view">
+      <div class="loader"></div>
+    </div>
+    <div class="bottom-explain-model">
+      <div>
+        <span class="sp-font1">联系热线</span>
+        <span class="sp-font2">上海品客国际物流有限公司</span>
+      </div>
+      <div>
+        <span class="sp-font3">400-086-1778</span>
+        <span class="sp-font4"
+          >Shanghai Pinke International Logistics Co. Ltd</span
+        >
+      </div>
+    </div>
+
+    <script src="../static/js/utils.js"></script>
+    <script>
+      // FBA仓码输入事件
+      const statCodeInput = document.getElementById("statCode");
+      const datalist = document.getElementById("FBANameList");
+      const herf = "http://192.168.109.229:8771";
+
+      let FBAList = [];
+
+      const getFBAList = () => {
+        return new Promise((resolve, reject) => {
+          // let url = `http://192.168.109.53:8771/cityPost/getStatCodeList/${statCodeInput.value}`;
+          // let url = `/cityPost/getCountryCombinationInfoList/${statCodeInput.value}`;
+          // let url = `/cityPost/getStatCodeList/${statCodeInput.value}`
+
+          const response = {
+            data: [
+              "A",
+              "B",
+              "C",
+              "D",
+              "E",
+              "F",
+              "G",
+              "H",
+              "I",
+              "J",
+              "K",
+              "L",
+              "M",
+              "N",
+              "O",
+              "P",
+              "Q",
+              "R",
+              "S",
+              "T",
+              "U",
+              "V",
+              "W",
+              "X",
+              "Y",
+              "Z"
+            ]
+          };
+
+          FBAList = response.data;
+          clearFBAList();
+
+          // const option = document.createElement("div");
+          // option.innerText = "无";
+          // option.className="dropdown-option"
+          // option.onclick = selectOption
+          // datalist.appendChild(option);
+
+          // response.data.forEach(appName => {
+          //   const option = document.createElement("option");
+          //   option.value = appName;
+          //   option.innerText = appName;
+          //   datalist.appendChild(option);
+          // });
+
+          resolve();
+        });
+      };
+
+      const getAddressBystatCode = code => {
+        // let url = `http://192.168.109.53:8771/cityPost/getCountryCombinationInfoList/${code}`;
+        // let url = `/cityPost/getCountryCombinationInfoList/${code}`;
+        let url = `/cityPost/getStatCodeList/${code}`;
+        return new Promise((resolve, reject) => {
+          // resolve({ basic_country_address: "AAAAAAAAAA" });
+
+          fetch(url, {
+            method: "GET",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: "ad9aff53-6671-4386-9a0e-c9ddc910b6ef"
+            }
+          })
+            .then(response => response.json())
+            .then(response => {
+              if (response.data.length > 0) {
+                datalist.innerHTML = "";
+                response.data.forEach(appName => {
+                  const option = document.createElement("div");
+                  option.textContent = appName;
+                  option.className = "dropdown-option";
+                  option.onclick = selectOption;
+                  datalist.appendChild(option);
+                });
+                try {
+                  resolve();
+                } catch (e) {
+                  reject(e);
+                }
+              } else {
+                datalist.innerHTML = "";
+                const option = document.createElement("div");
+                option.textContent = "暂无数据";
+                option.className = "dropdown-option";
+                option.onclick = selectOption;
+                datalist.appendChild(option);
+                resolve("");
+              }
+            })
+            .catch(error => {
+              // ele.style.display = "none";
+              console.error("Error:", error);
+              reject(error);
+            });
+        });
+      };
+      // const input = document.getElementById("recog");
+      async function selectOption(option) {
+        // console.log(option.textContent,option.innerText,option.target);
+        input1.value = option.target.innerText;
+        let res = await getAddressByFBACode(input1.value);
+        if (res) {
+          let { basic_country_address, townname, province, postcode } = res;
+          console.log(basic_country_address, townname, province, postcode);
+          document.getElementById("politicalDivision1").value = province;
+          document.getElementById("politicalDivision2").value = townname;
+          document.getElementById("postcodePrimaryLow").value = postcode;
+          document.getElementById("addressLine").value = basic_country_address;
+
+          // input.value = `${basic_country_address}\n${townname}\n${province}\n${postcode}`;
+          // console.log(input.value);
+          // await handleInputChange(input.value.replace(/\n/g, " "));
+        }
+        // document.getElementById("dropdownUpdate").click();
+        document.getElementById("FBANameList").style.display = "none";
+      }
+
+      const clearFBAList = () => {
+        if (datalist) {
+          while (datalist.hasChildNodes()) {
+            datalist.removeChild(datalist.firstChild);
+          }
+        } else {
+          console.error("clearFBAList is not found.");
+        }
+      };
+
+      const handleFBAInputChange = async () => {
+        if (["", "无"].includes(statCodeInput.value)) {
+          if (statCodeInput.value === "无") {
+            input.disabled = false;
+          }
+          return;
+        }
+        await getFBAList();
+
+        // if (FBAList.includes(statCodeInput.value)) {
+        const responseAddress = await getAddressBystatCode(statCodeInput.value);
+        // debugger;
+        // input.value = responseAddress.basic_country_address;
+        // handleInputChange(input.value.replace(/\n/g, " "));
+        // }
+      };
+
+      const debouncedHandleInput = debounce(handleFBAInputChange, 200);
+
+      statCodeInput.addEventListener("input", debouncedHandleInput);
+      let input1 = document.getElementById("statCode");
+      function filterOptions() {
+        console.log(12222);
+        const filter = statCode.value.toUpperCase();
+        const options = document
+          .getElementById("FBANameList")
+          .getElementsByTagName("div");
+        console.log(12, options);
+        // if (options.length == 0) {
+        //   document.getElementById("FBANameList").innerHTML = `
+        //   <div>暂无数据</div>
+        //   `;
+        //   document.getElementById("FBANameList").style.display = "block";
+        // }
+        for (let i = 0; i < options.length; i++) {
+          const txtValue = options[i].textContent || options[i].innerText;
+          if (txtValue.toUpperCase().indexOf(filter) > -1) {
+            options[i].style.display = "";
+          } else {
+            options[i].style.display = "none";
+          }
+        }
+      }
+
+      const handleInputChange = value => {
+        return new Promise(resolve => {
+          let ele = document.querySelector(".loading-view");
+          ele.style.display = "flex";
+          const params = new URLSearchParams();
+          params.append("address", value);
+          // params.append("address", encodeURIComponent(value));
+          fetch(
+            // "http://192.168.109.53:8769/insideinterface/basicUsCountryInfo/interceptAddress",
+            "/cityPost/interceptAddress",
+            {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/x-www-form-urlencoded",
+                Authorization: "ad9aff53-6671-4386-9a0e-c9ddc910b6ef"
+              },
+              body: params.toString() //.replace(/\+/g, ' ')
+            }
+          )
+            .then(response => response.json())
+            .then(data => {
+              if (data.code == 200) {
+                let p1 = document.getElementById("politicalDivision1");
+                let p2 = document.getElementById("politicalDivision2");
+                let p3 = document.getElementById("postcodePrimaryLow");
+                let a1 = document.getElementById("addressLine");
+                let { townname, province, postcode, addressArr, address } =
+                  data.data;
+                p1.value = province;
+                p2.value = townname;
+                p3.value = postcode;
+                a1.value = address;
+                resolve();
+              } else {
+                alert(data.msg);
+                resolve();
+              }
+            })
+            .catch(error => {
+              ele.style.display = "none";
+              console.error("Error:", error);
+            });
+        });
+      };
+
+      const getAddressByFBACode = code => {
+        // let url = `http://192.168.109.53:8771/cityPost/getCountryCombinationInfoList/${code}`;
+        let url = `/cityPost/getCountryCombinationInfoList/${code}`;
+        return new Promise((resolve, reject) => {
+          fetch(url, {
+            method: "GET",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: "ad9aff53-6671-4386-9a0e-c9ddc910b6ef"
+            }
+          })
+            .then(response => response.json())
+            .then(response => {
+              if (response.data.length > 0) {
+                try {
+                  resolve(JSON.parse(response.data[0]));
+                } catch (e) {
+                  reject(e);
+                }
+              } else {
+                resolve("");
+              }
+            })
+            .catch(error => {
+              ele.style.display = "none";
+              console.error("Error:", error);
+              reject(error);
+            });
+        });
+      };
+      const recogInput = document.getElementById("recog");
+
+      let changeEventFired = false;
+      recogInput.addEventListener("change", async function () {
+        changeEventFired = true;
+        await handleInputChange(recogInput.value.replace(/\n/g, " "));
+        recogInput.dispatchEvent(new CustomEvent("customChange"));
+      });
+
+      recogInput.addEventListener("customChange", function () {
+        _fun();
+      });
+
+      document
+        .getElementById("getClipboard")
+        .addEventListener("click", async () => {
+          changeEventFired = true;
+          await handleInputChange(recogInput.value.replace(/\n/g, " "));
+          recogInput.dispatchEvent(new CustomEvent("customChange"));
+          // if (!navigator.clipboard) {
+          //   inputField.focus(); // 聚焦输入框
+          //   try {
+          //     // 使用 execCommand 进行粘贴
+          //     document.execCommand("paste");
+          //     if (!document.getElementById("recog").value) {
+          //       return;
+          //     } else {
+          //       changeEventFired = true;
+          //       await handleInputChange(recogInput.value.replace(/\n/g, " "));
+          //       recogInput.dispatchEvent(new CustomEvent("customChange"));
+          //     }
+          //   } catch (error) {}
+          //   return;
+          // }
+          // try {
+          //   // 从剪切板读取文本
+          //   const clipboardText = await navigator.clipboard.readText();
+          //   if (!clipboardText) {
+          //     return;
+          //   } else {
+          //     // 将文本插入输入框
+          //     document.getElementById("recog").value = clipboardText;
+          //     changeEventFired = true;
+          //     await handleInputChange(recogInput.value.replace(/\n/g, " "));
+          //     recogInput.dispatchEvent(new CustomEvent("customChange"));
+          //   }
+          // } catch (err) {
+          //   console.log("粘贴失败:", err);
+          // }
+        });
+
+      function resetForm() {
+        let content = document.querySelector(".content");
+        content.innerText = "";
+        document.getElementById("myForm").reset();
+      }
+
+      // 处理表单提交
+      const myForm = document.getElementById("myForm");
+      function _fun() {
+        var formData = new FormData(myForm); // 创建FormData对象
+        let obj = {
+          type: "",
+          consigneeName: "",
+          buildingName: "",
+          addressLine: [],
+          region: "",
+          politicalDivision1: "",
+          politicalDivision2: "",
+          postcodePrimaryLow: "",
+          postcodeExtendedLow: "",
+          urbanization: "",
+          countryCode: "",
+          statCode: ""
+        };
+        for (var pair of formData.entries()) {
+          if (pair[0] == "addressLine") {
+            obj[pair[0]] = [pair[1]];
+          } else {
+            obj[pair[0]] = pair[1];
+          }
+        }
+        let ele = document.querySelector(".loading-view");
+        ele.style.display = "flex";
+        let content = document.querySelector(".content");
+        const map = {
+          0: "未分类",
+          1: "商业",
+          2: "住宅",
+          3: "混合"
+        };
+        fetch(
+          // "http://192.168.109.53:8771/cityPost/checkHome"
+          "/cityPost/checkHome",
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: "ad9aff53-6671-4386-9a0e-c9ddc910b6ef"
+            },
+            body: JSON.stringify(obj)
+          }
+        )
+          .then(response => response.json())
+          .then(data => {
+            let num = data.data;
+            let { code, msg } = data;
+            ele.style.display = "none";
+            if (code == 200) {
+              content.innerText = map[num];
+            } else {
+              alert(msg);
+            }
+          })
+          .catch(error => {
+            ele.style.display = "none";
+            // console.error("Error:", error);
+          });
+      }
+      myForm.addEventListener("submit", async event => {
+        event.preventDefault();
+        _fun();
+      });
+
+      document.addEventListener("DOMContentLoaded", function () {
+        input1.addEventListener("focus", function () {
+          input1.value = "";
+          document.getElementById("FBANameList").style.display = "block";
+        });
+
+        input1.addEventListener("blur", function () {
+          setTimeout(() => {
+            document.getElementById("FBANameList").style.display = "none";
+          }, 200);
+        });
+      });
+    </script>
+    <!-- <script type="module">
+      // 设置背景模块
+      import { myBackground } from "../static/js/background.js"; // 引入模块
+      const moduleDiv = myBackground();
+      document.getElementById("my-background").appendChild(moduleDiv); // 添加到页面
+    </script> -->
+  </body>
+</html>

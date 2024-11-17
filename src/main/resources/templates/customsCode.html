@@ -1,295 +1,389 @@
 <!DOCTYPE html>
 <html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>HS查询</title>
+    <link rel="stylesheet" href="../static/css/index.css" />
+    <link rel="stylesheet" href="../static/css/HSCode.css" />
+    <link rel="stylesheet" href="../static/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="../static/css/HSCodeInfo.css" />
+    <script src="../static/js/flexible.js"></script>
 
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>HS查询</title>
-  <link rel="stylesheet" href="../static/css/index.css" />
-
-  <link rel="stylesheet" href="../static/css/HSCode.css" />
-  <link rel="stylesheet" href="../static/css/bootstrap.min.css" />
-
-  <link rel="stylesheet" href="../static/css/HSCodeInfo.css" />
-  
-  
-  <style>
-    .body-container {
-      padding: 40px 40px 10px;
-      height: calc(100% - 50px);
-      overflow: hidden;
-      display: flex;
-      flex-flow: column nowrap;
-      justify-content: space-between;
-    }
-
-    .loading-view {
-      position: absolute;
-      top: 0;
-      left: 0;
-      right: 0;
-      bottom: 0;
-      background-color: rgba(255, 255, 255, 0.5);
-      display: none;
-      justify-content: center;
-      align-items: center;
-    }
-
-    .loader {
-      border: 12px solid #f3f3f3;
-      /* Light grey */
-      border-top: 12px solid #3498db;
-      /* Blue */
-      border-radius: 50%;
-      width: 45px;
-      height: 45px;
-      animation: spin 2s linear infinite;
-    }
-
-    @keyframes spin {
-      0% {
-        transform: rotate(0deg);
+    <style>
+      .custom-container {
+        position: relative;
+        height: 100%;
+        overflow: hidden;
+        display: flex;
+        flex-flow: column nowrap;
+        padding-bottom: 1.2rem;
+      }
+      .bottom-explain-model {
+        width: 100%;
+        position: absolute;
+        bottom: 0;
+        padding-bottom: 0.2703rem;
+        background-color: #fff;
+      }
+      .bottom-explain-model > div {
+        padding: 0.2rem 0.2703rem 0;
+        display: flex;
+        justify-content: space-between;
+      }
+      .bottom-explain-model div .sp-font1 {
+        font-size: 0.2162rem;
       }
 
-      100% {
-        transform: rotate(360deg);
+      .bottom-explain-model div .sp-font2 {
+        font-size: 0.2703rem;
       }
-    }
 
-    .search-box {
-      display: flex;
-      flex-flow: row nowrap;
-      justify-content: center;
-      align-items: center;
-    }
+      .bottom-explain-model div .sp-font3 {
+        font-size: 0.3243rem;
+      }
 
-    .search-box input {
-      flex: 1;
-      margin-right: 16px;
-      padding: 0 16px;
-      height: 36px;
-      background-color: rgba(255, 255, 255, .8);
-      border-radius: 10.5px;
-      color: #000;
-      border: none;
-      font-size: 16px;
-    }
+      .bottom-explain-model div .sp-font4 {
+        font-size: 0.2162rem;
+      }
 
-    .search-box input:focus {
-      border: none !important;
-      outline: none;
-    }
+      .loading-view {
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background-color: rgba(255, 255, 255, 0.5);
+        display: none;
+        justify-content: center;
+        align-items: center;
+      }
 
-    .search-box .search-btn {
-      color: rgb(0, 122, 255);
-      font-weight: bold;
-      cursor: pointer;
-      padding: 5px 12px;
-      border-radius: 5px;
-    }
+      .loader {
+        border: 0.3243rem solid #f3f3f3;
+        /* Light grey */
+        border-top: 0.3243rem solid #3498db;
+        /* Blue */
+        border-radius: 50%;
+        width: 1.2162rem;
+        height: 1.2162rem;
+        animation: spin 2s linear infinite;
+      }
 
-    #content {
-      flex: 1;
-      overflow: scroll;
-      margin: 20px 0;
-      background-color: #fff;
-      border-radius: 10px;
-      padding: 10px;
-      position: relative;
-    }
+      @keyframes spin {
+        0% {
+          transform: rotate(0deg);
+        }
 
-    #content .result {
-      border-collapse: collapse;
-      line-height: 16px;
-    }
+        100% {
+          transform: rotate(360deg);
+        }
+      }
+      .search-model{
+        background-color: #ebebeb;
+        padding: 0.2703rem 0.5405rem;
+      }
 
-    #content .result td,
-    th {
-      font-size: 12px;
-    }
+      .search-box {
+        display: flex;
+        flex-flow: row nowrap;
+        justify-content: center;
+        align-items: center;
+        background-color: #fff;
 
-    #content .result tbody .head-row {
-      font-weight: bold;
-      border-bottom: 2px solid #3b4560;
-    }
+        border-radius: 0.5405rem;
+      }
 
-    .result-grid td {
-      border-bottom: 1px solid #dddddd;
-      vertical-align: middle;
-      padding: 5px 5px 6px;
-    }
+      .search-box img {
+        height: 0.5324rem;
+        margin: 0 0.1551rem;
+      }
 
-    #content #empty-tip {
-      color: #b0b0b0;
-      position: absolute;
-      left: 50%;
-      top: 50%;
-      transform: translate(-50%, -50%);
-    }
+      .search-box input {
+        flex: 1;
+        margin-right: 0.4324rem;
+        padding: 0 0.2162rem;
+        height: 0.973rem;
 
-    #content {
-      width: 100%;
-      overflow-x: auto;
-      max-width: 1200px;/
-    }
+        border-radius: 0.2838rem;
+        color: #000;
+        border: none;
+        font-size: 0.4324rem;
+      }
 
-    table {
-      width: 100%;
-      border-collapse: collapse;
-    }
+      .search-box input::placeholder {
+        font-size: 0.3843rem;
+      }
 
-    th,
-    td {
-      /* padding: 8px; */
-      text-align: left;
-      border: 1px solid #ccc;
-      /* width: auto; */
-    }
+      .search-box input:focus {
+        border: none !important;
+        outline: none;
+      }
 
-    th {
-      background-color: #f2f2f2;
-    }
-  </style>
-  <!-- <script src="../static/js/flexible.js"></script> -->
-</head>
+      .search-box .search-btn {
+        color: rgb(0, 122, 255);
+        font-weight: bold;
+        cursor: pointer;
+        padding: 0.1351rem 0.3243rem;
+        border-radius: 0.1351rem;
+      }
 
-<body>
-  <div class="background"></div>
-  <div class="loading-view">
-    <div class="loader"></div>
-  </div>
-  <div class="body-container">
-    <div class="search-box">
-      <input type="text" id="search-input" placeholder="请输入品名" />
-      <div class="search-btn" onclick="handleSearchList()">查询</div>
+      #content {
+        flex: 1;
+        overflow-y: scroll;
+        background-color: #fff;
+        border-radius: 0.2703rem;
+        overflow-x: hidden;
+        position: relative;
+        margin: 0 0.0811rem;
+        margin-bottom: 0.3243rem;
+        border-bottom: 0.027rem solid #e8e8e8;
+        /* max-height: ; */
+      }
+
+
+      #content .result {
+        border-collapse: collapse;
+        line-height: 0.4324rem;
+      }
+
+
+
+      #content .result td,
+      th {
+        font-size: 0.3243rem;
+      }
+
+      #content .result tbody .head-row {
+        font-weight: bold;
+        border-bottom: 0.0541rem solid #3b4560;
+      }
+
+      .result-grid td {
+        border-bottom: 0.027rem solid #dddddd;
+        vertical-align: middle;
+        padding: 0.1351rem 0.1351rem 0.1622rem;
+      }
+      .head-row td {
+        padding: 0rem !important;
+        text-align: center;
+        /* width: 100%; */
+      }
+
+
+      #content #empty-tip {
+        color: #b0b0b0;
+        position: absolute;
+        left: 50%;
+        top: 50%;
+        transform: translate(-50%, -50%);
+      }
+
+
+
+      table {
+        position: absolute;
+        left: 0;
+        top: 0;
+        right: 0;
+        width:100%;
+        padding: 0.2703rem;
+        border-collapse: collapse;
+      }
+
+      th,
+      td {
+        /* padding: 0.2162rem; */
+        text-align: left;
+        border: 0.027rem solid #ccc;
+        /* width: auto; */
+      }
+
+      th {
+        background-color: #f2f2f2;
+      }
+      .w105{
+        max-width: 2.2973rem;
+      }
+      /* .head-row{
+        max-height:37px !important;
+      } */
+      /* tbody tr:first-child  td {
+        max-height:37px;
+        max-width: 80px;
+      } */
+    </style>
+    <!-- <script src="../static/js/flexible.js"></script> -->
+  </head>
+
+  <!-- <body style="background-color: #fbf1e7"> -->
+    <!-- 背景模块 -->
+    <!-- <div id="my-background" class="background"></div> -->
+    <div class="loading-view">
+      <div class="loader"></div>
     </div>
-    <div id="content">
-      <span id="empty-tip">暂无数据</span>
-    </div>
-    <footer>
-      <p class="company-name">上海品客国际物流有限公司</p>
-      <p class="company-name-english">
-        Shanghai Pinke International Logistics Co. Ltd
-      </p>
-    </footer>
-  </div>
-  
-  <script>
-    var targetDiv = document.getElementById("content");
-    var searchInput = document.getElementById("search-input");
-    var emptyTip = document.getElementById("empty-tip");
-    let ele = document.querySelector(".loading-view");
-    let prefix = 'http://3.89.216.190:8771'
-    function handleSearchList() {
-      // ele.style.display = "flex";
+    <div class="custom-container">
+      <div class="search-model">
+        <div class="search-box">
+          <img src="../static//img//search.png" alt="搜索图标" />
+          <input
+            type="text"
+            id="search-input"
+            placeholder="请输入中/英文品名或者HS编码"
+            onkeyup="handleSearchList()"
+          />
+        </div>
+      </div>
 
-      const params = {
-        keywords: searchInput.value.trim(),
-        filterFailureCode: true, // 过滤过期编码
-        displayenname: true // 是否显示英文名
-      };
-      const url = `/cityPost/getCustoms?keywords=${params.keywords}`;//&displayenname=${params.displayenname}&filterFailureCode=${params.filterFailureCode}
-      fetch(prefix+url, {
-        method: "GET"
-      })
-        .then(response => response.json())
-        .then(responseText => {
-          responseText.data = `<table> ${responseText.data} </table>`
-          targetDiv.innerHTML = responseText.data
-          const allLinks = document.querySelectorAll('a');
-          console.log(allLinks);
-          // 为每个a标签添加点击事件监听器
-          allLinks.forEach(link => {
-            link.addEventListener('click', event => {
-              event.preventDefault();
-              var match = event.target.href.match(/\/Code\/(\d+)\.html/);
-              if (match) {
-                var number = match[1];
-                console.log(number); // 输出：4202129000
-                 handleGetDetail(number)
-              }
+        <div id="content">
+          <span id="empty-tip">暂无数据</span>
+        </div>
+
+
+      <div class="bottom-explain-model">
+        <div>
+          <span class="sp-font1">联系热线</span>
+          <span class="sp-font2">上海品客国际物流有限公司</span>
+        </div>
+        <div>
+          <span class="sp-font3">400-086-1778</span>
+          <span class="sp-font4"
+            >Shanghai Pinke International Logistics Co. Ltd</span
+          >
+        </div>
+      </div>
+    </div>
+
+
+    <!-- <script type="module">
+      // 设置背景模块
+      import { myBackground } from "../static/js/background.js"; // 引入模块
+      const moduleDiv = myBackground();
+      document.getElementById("my-background").appendChild(moduleDiv); // 添加到页面
+    </script> -->
+
+    <script>
+      var targetDiv = document.getElementById("content");
+      var searchInput = document.getElementById("search-input");
+      var emptyTip = document.getElementById("empty-tip");
+      let ele = document.querySelector(".loading-view");
+      let prefix = "http://192.168.109.229:8771";
+      function handleSearchList() {
+        const params = {
+          keywords: searchInput.value.trim(),
+          filterFailureCode: true, // 过滤过期编码
+          displayenname: true // 是否显示英文名
+        };
+        const url = `/cityPost/getCustoms?keywords=${params.keywords}`; //&displayenname=${params.displayenname}&filterFailureCode=${params.filterFailureCode}
+        fetch(url, {
+          method: "GET"
+        })
+          .then(response => response.json())
+          .then(responseText => {
+            const matches = responseText.data.match(/>([^<]+)</g);
+
+            // 处理结果，提取匹配的内容
+            const results = matches
+              ? matches.map(match => match.slice(1, -1).trim())
+              : [];
+
+            console.log(results);
+
+            responseText.data = `<table> ${responseText.data} </table>`;
+            targetDiv.innerHTML = responseText.data;
+            const allLinks = document.querySelectorAll("a");
+            console.log(allLinks);
+            // 为每个a标签添加点击事件监听器
+            allLinks.forEach(link => {
+              link.addEventListener("click", event => {
+                event.preventDefault();
+                var match = event.target.href.match(/\/Code\/(\d+)\.html/);
+                if (match) {
+                  var number = match[1];
+                  console.log(number); // 输出：4202129000
+                  handleGetDetail(number);
+                }
+              });
             });
+            // targetDiv.innerHTML = ''
+            // console.log(responseText.data);
+            // const parser = new DOMParser();
+            // const doc = parser.parseFromString(responseText.data, "text/html");
+            // var firstResultElement = doc.querySelectorAll(".result");
+            // console.log(doc, firstResultElement);
+            // if (!firstResultElement) {
+            //   return;
+            // }
+            // const fragment = document.createDocumentFragment();
+            // firstResultElement.forEach(resultElement => {
+            //   var newResultElement = resultElement.cloneNode(true);
+            //   fragment.appendChild(newResultElement);
+            // });
+            // targetDiv.appendChild(fragment);
+            // ele.style.display = "none";
+            // emptyTip.style.display = "none";
+            // // 显示英文名
+            // var elements = document.querySelectorAll(
+            //   '[id^="insenname-"], [id*=" insenname-"]'
+            // );
+            // elements.forEach(function (element) {
+            //   element.style.display = "block";
+            //   element.style.color = "color";
+            // });
+
+            // var links = document.getElementsByTagName("a");
+            // for (var i = 0; i < links.length; i++) {
+            //   links[i].addEventListener("click", event => {
+            //     event.preventDefault();
+            //     const url_suffix = event.target.getAttribute("href");
+            //     handleGetDetail(url_suffix);
+            //   });
+            // }
+
+            // ele.style.display = "none";
+            // emptyTip.style.display = "none";
+          })
+          .catch(error => {
+            ele.style.display = "none";
+            emptyTip.style.display = "block";
+            console.error("Error:", error);
           });
-          // targetDiv.innerHTML = ''
-          // console.log(responseText.data);
-          // const parser = new DOMParser();
-          // const doc = parser.parseFromString(responseText.data, "text/html");
-          // var firstResultElement = doc.querySelectorAll(".result");
-          // console.log(doc, firstResultElement);
-          // if (!firstResultElement) {
-          //   return;
-          // }
-          // const fragment = document.createDocumentFragment();
-          // firstResultElement.forEach(resultElement => {
-          //   var newResultElement = resultElement.cloneNode(true);
-          //   fragment.appendChild(newResultElement);
-          // });
-          // targetDiv.appendChild(fragment);
-          // ele.style.display = "none";
-          // emptyTip.style.display = "none";
-          // // 显示英文名
-          // var elements = document.querySelectorAll(
-          //   '[id^="insenname-"], [id*=" insenname-"]'
-          // );
-          // elements.forEach(function (element) {
-          //   element.style.display = "block";
-          //   element.style.color = "color";
-          // });
+      }
 
-          // var links = document.getElementsByTagName("a");
-          // for (var i = 0; i < links.length; i++) {
-          //   links[i].addEventListener("click", event => {
-          //     event.preventDefault();
-          //     const url_suffix = event.target.getAttribute("href");
-          //     handleGetDetail(url_suffix);
-          //   });
-          // }
-
-          // ele.style.display = "none";
-          // emptyTip.style.display = "none";
+      function handleGetDetail(event) {
+        const url = `/cityPost/getCustomsDetails?productCode=${event}`;
+        fetch(url, {
+          method: "GET"
         })
-        .catch(error => {
-          ele.style.display = "none";
-          emptyTip.style.display = "block";
-          console.error("Error:", error);
-        });
-    }
+          .then(response => response.json())
+          .then(responseText => {
+            targetDiv.innerHTML = responseText.data;
+            // const parser = new DOMParser();
+            // const doc = parser.parseFromString(responseText, "text/html");
+            // var firstResultElement = doc.querySelectorAll("#code-info");
 
-    function handleGetDetail(event) {
-      const url = `http://3.89.216.190:8771/cityPost/getCustomsDetails?productCode=${event}`;
-      fetch(url, {
-        method: "GET"
-      })
-        .then(response => response.json())
-        .then(responseText => {
-          targetDiv.innerHTML = responseText.data
-          // const parser = new DOMParser();
-          // const doc = parser.parseFromString(responseText, "text/html");
-          // var firstResultElement = doc.querySelectorAll("#code-info");
+            // if (!firstResultElement) {
+            //   return;
+            // }
+            // // 移除列表
+            // var elements = document.getElementsByClassName("result");
+            // for (var i = elements.length - 1; i >= 0; i--) {
+            //   elements[i].remove();
+            // }
 
-          // if (!firstResultElement) {
-          //   return;
-          // }
-          // // 移除列表
-          // var elements = document.getElementsByClassName("result");
-          // for (var i = elements.length - 1; i >= 0; i--) {
-          //   elements[i].remove();
-          // }
-
-          // firstResultElement.forEach(resultElement => {
-          //   var newResultElement = resultElement.cloneNode(true);
-          //   targetDiv.appendChild(newResultElement);
-          // });
-          // ele.style.display = "none";
-          // emptyTip.style.display = "none";
-        })
-        .catch(error => {
-          ele.style.display = "none";
-          emptyTip.style.display = "block";
-          console.error("Error:", error);
-        });
-    }
-  </script>
-</body>
-
+            // firstResultElement.forEach(resultElement => {
+            //   var newResultElement = resultElement.cloneNode(true);
+            //   targetDiv.appendChild(newResultElement);
+            // });
+            // ele.style.display = "none";
+            // emptyTip.style.display = "none";
+          })
+          .catch(error => {
+            ele.style.display = "none";
+            emptyTip.style.display = "block";
+            console.error("Error:", error);
+          });
+      }
+    </script>
+  </body>
 </html>

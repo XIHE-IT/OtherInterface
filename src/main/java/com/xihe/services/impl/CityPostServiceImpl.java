@@ -1,5 +1,6 @@
 package com.xihe.services.impl;
 
+import com.baomidou.dynamic.datasource.annotation.DS;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
@@ -8,18 +9,13 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.xihe.services.CityPostService;
 import com.xihe.util.JsonUtil;
 import jakarta.annotation.Resource;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Value;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.core.HashOperations;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.data.redis.core.ValueOperations;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
 
-import java.sql.Connection;
-import java.sql.DriverManager;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -32,25 +28,15 @@ import java.util.regex.Pattern;
  * @author gzy
  * @since 2024-09-03 17:29:36
  */
+@DS("k5")
+@Slf4j
 @Service("basicUsCountryInfoService")
 public class CityPostServiceImpl implements CityPostService {
 
-    private static final Logger log = LoggerFactory.getLogger(CityPostServiceImpl.class);
-
     @Resource
     private StringRedisTemplate stringRedisTemplate;
-
-    @Value("${other.connect.driver}")
-    private String driver;
-
-    @Value("${other.connect.url}")
-    private String url;
-
-    @Value("${other.connect.username}")
-    private String username;
-
-    @Value("${other.connect.password}")
-    private String password;
+    @Resource
+    private JdbcTemplate jdbcTemplate;
 
     /**
      * 查询所有省/州
@@ -61,52 +47,9 @@ public class CityPostServiceImpl implements CityPostService {
      */
     private List<String> getAllProvinceList() {
         List<String> backList = new ArrayList<>();
-        String url = "jdbc:jtds:sqlserver://localhost:1433/k5new";
-        String user = "sa";
-        String password = "qwe123!";
-
-        // Declare the JDBC objects.
-        Connection con = null;
-        PreparedStatement pre = null;
-        ResultSet rs = null;
-
-        try {
-            // Establish the connection.
-            System.out.println("begin.");
-            Class.forName("net.sourceforge.jtds.jdbc.Driver");
-            con = DriverManager.getConnection(url, user, password);
-            System.out.println("end.");
-
-            String sql = "select distinct province from basic_us_country_info";
-            pre = con.prepareStatement(sql);
-            rs = pre.executeQuery();
-            while (rs.next()) {
-                backList.add(rs.getString(1).trim());
-            }
-        }
-
-        // Handle any errors that may have occurred.
-        catch (Exception e) {
-            e.printStackTrace();
-        } finally {
-            if (rs != null) {
-                try {
-                    rs.close();
-                } catch (Exception ignored) {
-                }
-            }
-            if (pre != null) {
-                try {
-                    pre.close();
-                } catch (Exception ignored) {
-                }
-            }
-            if (con != null) {
-                try {
-                    con.close();
-                } catch (Exception ignored) {
-                }
-            }
+        List<Map<String, Object>> list = jdbcTemplate.queryForList("select distinct province from basic_us_country_info");
+        for (Map<String, Object> tempMap : list) {
+            backList.add(tempMap.get("province").toString().trim());
         }
 
         return backList;
@@ -121,52 +64,11 @@ public class CityPostServiceImpl implements CityPostService {
      */
     private List<String> provinceGetTownname(String country, String province) {
         List<String> backList = new ArrayList<>();
-        String url = "jdbc:jtds:sqlserver://localhost:1433/k5new";
-        String user = "sa";
-        String password = "qwe123!";
 
-        // Declare the JDBC objects.
-        Connection con = null;
-        PreparedStatement pre = null;
-        ResultSet rs = null;
-
-        try {
-            // Establish the connection.
-            System.out.println("begin.");
-            Class.forName("net.sourceforge.jtds.jdbc.Driver");
-            con = DriverManager.getConnection(url, user, password);
-            System.out.println("end.");
-
-            String sql = "select distinct townname from basic_us_country_info where country=? and province=?";
-            pre = con.prepareStatement(sql);
-            pre.setString(1, country);
-            pre.setString(2, province);
-            rs = pre.executeQuery();
-            while (rs.next()) {
-                String townname = rs.getString(1).trim();
-                backList.add(townname);
-            }
-        } catch (Exception e) {// Handle any errors that may have occurred.
-            e.printStackTrace();
-        } finally {
-            if (rs != null) {
-                try {
-                    rs.close();
-                } catch (Exception ignored) {
-                }
-            }
-            if (pre != null) {
-                try {
-                    pre.close();
-                } catch (Exception ignored) {
-                }
-            }
-            if (con != null) {
-                try {
-                    con.close();
-                } catch (Exception ignored) {
-                }
-            }
+        String sql = "select distinct townname from basic_us_country_info where country='" + country + "' and province='" + province + "'";
+        List<Map<String, Object>> list = jdbcTemplate.queryForList(sql);
+        for (Map<String, Object> tempMap : list) {
+            backList.add(tempMap.get("townname").toString().trim());
         }
 
         return backList;
@@ -459,86 +361,33 @@ public class CityPostServiceImpl implements CityPostService {
     @Override
     public List<String> getStatCodeList(String str) {
         List<String> statCodeList = new ArrayList<>();
-        Connection con = null;
-        PreparedStatement pre = null;
-        ResultSet rs = null;
-        try{
-            con = this.initializeConnection();
-            String sql = "select distinct basic_stat_code from basic_us_country_info where basic_stat_code like ?";
-            pre = con.prepareStatement(sql);
-            pre.setString(1, "%"+str.toUpperCase()+"%");
-            rs = pre.executeQuery();
-            while (rs.next()) {
-                statCodeList.add(rs.getString("basic_stat_code").trim());
-            }
-        }catch (Exception e) {
-            log.error(e.getMessage());
-        }finally {
-            this.closeStatement(con, pre, rs);
+
+        String sql = "select distinct basic_stat_code from basic_stat_country_info where basic_stat_code like '%" + str.toUpperCase() + "%'";
+        List<Map<String, Object>> list = jdbcTemplate.queryForList(sql);
+        for (Map<String, Object> tempMap : list) {
+            statCodeList.add(tempMap.get("basic_stat_code").toString().trim());
         }
+
         return statCodeList;
     }
 
     @Override
     public List<String> getCountryCombinationInfoList(String statCode) {
         List<String> countryCombinationInfoList = new ArrayList<>();
-        Connection con = null;
-        PreparedStatement pre = null;
-        ResultSet rs = null;
-        try{
-            con = this.initializeConnection();
-            String sql = "select distinct basic_country_address,townname,province,postcode from basic_us_country_info where basic_stat_code = ?";
-            pre = con.prepareStatement(sql);
-            pre.setString(1, statCode);
-            rs = pre.executeQuery();
-            while (rs.next()) {
-                countryCombinationInfoList.add(JsonUtil.toJson(Map.ofEntries(
-                        Map.entry("basic_country_address", rs.getString("basic_country_address").trim()),
-                        Map.entry("townname", rs.getString("townname").trim()),
-                        Map.entry("province", rs.getString("province").trim()),
-                        Map.entry("postcode", rs.getString("postcode").trim())
-                )));
-            }
-        }catch (Exception e) {
-            log.error(e.getMessage());
-        }finally {
-            this.closeStatement(con, pre, rs);
+
+        String sql = "select distinct basic_country_address,townname,province,postcode from basic_stat_country_info where basic_stat_code = '" + statCode + "'";
+        List<Map<String, Object>> list = jdbcTemplate.queryForList(sql);
+        for (Map<String, Object> tempMap : list) {
+            String tempStr = JsonUtil.toJson(Map.ofEntries(
+                    Map.entry("basic_country_address", tempMap.get("basic_country_address").toString().trim()),
+                    Map.entry("townname", tempMap.get("townname").toString().trim()),
+                    Map.entry("province", tempMap.get("province").toString().trim()),
+                    Map.entry("postcode", tempMap.get("postcode").toString().trim())
+            ));
+            countryCombinationInfoList.add(tempStr);
         }
+
         return countryCombinationInfoList;
     }
-
-    /**
-     * 初始化连接
-     *
-     * @author yangL
-     * @since  2024/9/21
-     */
-    private Connection initializeConnection() throws Exception {
-        Class.forName(driver);
-        return DriverManager.getConnection(url, username, password);
-    }
-
-    /**
-     * 关闭声明
-     *
-     * @author yangL
-     * @since  2024/9/21
-     */
-    private void closeStatement(Connection con, PreparedStatement pre,  ResultSet rs){
-        try {
-            if (rs != null) {
-                rs.close();
-            }
-            if (pre != null) {
-                pre.close();
-            }
-            if (con != null) {
-                con.close();
-            }
-        }catch (Exception e) {
-            log.error(e.getMessage());
-        }
-    }
-
 }
 

@@ -69,6 +69,11 @@ public class FedexFuel implements FuelServices {
 //        map.put("cn", response.getBody());
         WebDriver driver = new ChromeDriver();
         driver.get("https://www.fedex.com/zh-cn/shipping/surcharges.html");
+        try {
+            Thread.sleep(1000);
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
+        }
         map.put("cn", driver.getPageSource());
         driver.get("https://www.fedex.com/en-us/shipping/fuel-surcharge.html");
         map.put("us", driver.getPageSource());
@@ -102,65 +107,76 @@ public class FedexFuel implements FuelServices {
         String backStr = fuelMap.get("cn");
         Document document = Jsoup.parse(backStr);
         Elements fedexTable = document.getElementsByClass("fxg-fsc__table");
-        if(!fedexTable.isEmpty()){
+        if (!fedexTable.isEmpty()) {
             Element table = fedexTable.get(0);
             Elements trArr = table.getElementsByTag("tr");
             List<Fuel> list = new ArrayList<>();
-            for (int i = 1; i < 5; i++) {
-                Element temp = trArr.get(i);
-                Elements tdArr = temp.getElementsByTag("td");
-                Fuel fuel = new Fuel();
-                String date = tdArr.get(0).text();
-                int index = date.indexOf("-");
-                if (index != -1) {
-                    date = date.substring(0, index - 1);
+            if (!trArr.isEmpty() && trArr.size() > 2) {
+                for (int i = 1; i < 5; i++) {
+                    Element temp = trArr.get(i);
+                    Elements tdArr = temp.getElementsByTag("td");
+                    Fuel fuel = new Fuel();
+                    String date = tdArr.get(0).text();
+                    int index = date.indexOf("-");
+                    if (index != -1) {
+                        date = date.substring(0, index - 1);
+                    }
+                    //从中取出带月字
+                    String month;
+                    int beginIndex = 7;
+                    if (date.length() == 12) {
+                        month = date.substring(3, 6);
+                        beginIndex = 8;
+                    } else {
+                        month = date.substring(3, 5);
+                    }
+                    date = date.substring(beginIndex) + "/" + DateUtil.chineseMonthToNumber(month) + "/" + date.substring(0, 2);
+                    fuel.setFuelDate(date);
+                    fuel.setFuel1(tdArr.get(2).text());
+                    list.add(fuel);
                 }
-                //从中取出带月字
-                String month = date.substring(3, 5);
-                date = date.substring(7) + "/" + DateUtil.chineseMonthToNumber(month) + "/" + date.substring(0, 2);
-                fuel.setFuelDate(date);
-                fuel.setFuel1(tdArr.get(2).text());
-                list.add(fuel);
+                resultMap.put("cn", list);
             }
-            resultMap.put("cn", list);
         }
 
         //美国fedex
         backStr = fuelMap.get("us");
         document = Jsoup.parse(backStr);
         fedexTable = document.getElementsByClass("fxg-table--striped-row");
-        if(!fedexTable.isEmpty()){
+        if (!fedexTable.isEmpty()) {
             Element table = fedexTable.get(0);
             Elements trArr = table.getElementsByTag("tr");
             List<Fuel> list = new ArrayList<>();
-            for (int i = 2; i < trArr.size(); i++) {
-                Element temp = trArr.get(i);
-                Elements tdArr = temp.getElementsByTag("td");
-                Fuel fuel = new Fuel();
-                String date = tdArr.get(0).text();
-                int index = date.indexOf("–");
-                if (index != -1) {
-                    date = date.substring(0, index);
-                }
-                try {
-                    //校验点前面的是几位数，若多了一位自动切割
-                    index = date.indexOf(".");
-                    if (index > 3) {
-                        date = date.substring(0, index - 1) + ". " + date.substring(6);
+            if (!trArr.isEmpty() && trArr.size() > 2) {
+                for (int i = 2; i < trArr.size(); i++) {
+                    Element temp = trArr.get(i);
+                    Elements tdArr = temp.getElementsByTag("td");
+                    Fuel fuel = new Fuel();
+                    String date = tdArr.get(0).text();
+                    int index = date.indexOf("–");
+                    if (index != -1) {
+                        date = date.substring(0, index);
                     }
-                    Date tempDate = simpleDateFormat.parse(date);
-                    date = backDate.format(tempDate);
-                } catch (ParseException e) {
-                    throw new RuntimeException(e);
+                    try {
+                        //校验点前面的是几位数，若多了一位自动切割
+                        index = date.indexOf(".");
+                        if (index > 3) {
+                            date = date.substring(0, index - 1) + ". " + date.substring(6);
+                        }
+                        Date tempDate = simpleDateFormat.parse(date);
+                        date = backDate.format(tempDate);
+                    } catch (ParseException e) {
+                        throw new RuntimeException(e);
+                    }
+                    fuel.setFuelDate(date);
+                    fuel.setFuel1(tdArr.get(5).text());
+                    fuel.setFuel2(tdArr.get(6).text());
+                    fuel.setFuel3(tdArr.get(1).text());
+                    fuel.setFuel4(tdArr.get(3).text());
+                    list.add(fuel);
                 }
-                fuel.setFuelDate(date);
-                fuel.setFuel1(tdArr.get(5).text());
-                fuel.setFuel2(tdArr.get(6).text());
-                fuel.setFuel3(tdArr.get(1).text());
-                fuel.setFuel4(tdArr.get(3).text());
-                list.add(fuel);
+                resultMap.put("us", list);
             }
-            resultMap.put("us", list);
         }
 
         return resultMap;

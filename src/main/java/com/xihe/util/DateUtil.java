@@ -1,7 +1,5 @@
 package com.xihe.util;
 
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.ZoneId;
@@ -176,6 +174,32 @@ public class DateUtil {
         return chineseMonthToNumberMap.get(chineseMonth);
     }
 
+    /**
+     * 根据日期获取是星期几
+     *
+     * @param date 一个日期
+     * @return java.lang.String
+     * @author gzy
+     * @date 2024/10/25 11:56
+     */
+    public static String getDayOfWeekString(Date date) {
+        // 使用Calendar获取星期几
+        Calendar calendar = Calendar.getInstance();
+        calendar.setTime(date);
+
+        int dayOfWeek = calendar.get(Calendar.DAY_OF_WEEK);
+        return switch (dayOfWeek) {
+            case Calendar.SUNDAY -> "星期日";
+            case Calendar.MONDAY -> "星期一";
+            case Calendar.TUESDAY -> "星期二";
+            case Calendar.WEDNESDAY -> "星期三";
+            case Calendar.THURSDAY -> "星期四";
+            case Calendar.FRIDAY -> "星期五";
+            case Calendar.SATURDAY -> "星期六";
+            default -> "未知";
+        };
+    }
+
     public static void main(String[] args) {
 //        System.out.println(getLastWeekMonday(new Date()));
 //        System.out.println(getThisWeekMonday(new Date()));
@@ -184,19 +208,20 @@ public class DateUtil {
 //        System.out.println(DateUtil.getMonthDifference(2));
 //        System.out.println(DateUtil.getNextWeekMonday(new Date()));
 
-        String time = "2024/10/14";
-        SimpleDateFormat thirdDateFormat = new SimpleDateFormat("yyyy/MM/dd");
-        long tempRateTime = 0;
-        try {
-            tempRateTime = thirdDateFormat.parse(time).getTime();
-        } catch (ParseException e) {
-            throw new RuntimeException(e);
-        }
-        Date nowDate = new Date();
-        Date nextWeekMonday = DateUtil.getNextWeekMonday(nowDate);
-        long nextMondayTime = nextWeekMonday.getTime();
-        if (tempRateTime >= nextMondayTime) {
-            System.out.println(DateUtil.getDifference(new Date(), nextWeekMonday) / 1000 + (5 * 24 * 60 * 60));
-        }
+//        String time = "2024/10/14";
+//        SimpleDateFormat thirdDateFormat = new SimpleDateFormat("yyyy/MM/dd");
+//        long tempRateTime = 0;
+//        try {
+//            tempRateTime = thirdDateFormat.parse(time).getTime();
+//        } catch (ParseException e) {
+//            throw new RuntimeException(e);
+//        }
+//        Date nowDate = new Date();
+//        Date nextWeekMonday = DateUtil.getNextWeekMonday(nowDate);
+//        long nextMondayTime = nextWeekMonday.getTime();
+//        if (tempRateTime >= nextMondayTime) {
+//            System.out.println(DateUtil.getDifference(new Date(), nextWeekMonday) / 1000 + (5 * 24 * 60 * 60));
+//        }
+        System.out.println(getDayOfWeekString(new Date()));
     }
 }

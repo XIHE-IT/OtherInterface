@@ -24,6 +24,25 @@ spring:
           max-idle: 10
           min-idle: 0
           max-wait: 10000
+  datasource:
+    dynamic:
+      primary: k5
+      strict: false
+      datasource:
+        k5:
+          url: jdbc:sqlserver://rm-bp1085gt89v6u0ms7so.sqlserver.rds.aliyuncs.com:1433;databaseName=k5;encrypt=true;trustServerCertificate=true;loginTimeout=30;
+          username: XH
+          password: Passw0rd
+          driver-class-name: com.microsoft.sqlserver.jdbc.SQLServerDriver
+        t6:
+          url: jdbc:sqlserver://rm-bp1085gt89v6u0ms7so.sqlserver.rds.aliyuncs.com:1433;databaseName=t6new;encrypt=true;trustServerCertificate=true;loginTimeout=30;
+          username: XH
+          password: Passw0rd
+          driver-class-name: com.microsoft.sqlserver.jdbc.SQLServerDriver
+#    jpa:
+#      hibernate:
+#        ddl-auto: update
+#      show-sql: true
   mvc:
     static-path-pattern: /static/**
   thymeleaf:
@@ -41,12 +60,3 @@ knife4j:
     enable-footer: true
     enable-footer-custom: true
     footer-custom-content: Apache License 2.0 | Copyright  2019-[XIHE](https://www.baidu.com)
-
-other:
-  connect:
-    url: jdbc:jtds:sqlserver://localhost:1433/k5new
-    username: sa
-    password: qwe123!
-    driver: net.sourceforge.jtds.jdbc.Driver
-  customs:
-    url: https://www.hsbianma.com
