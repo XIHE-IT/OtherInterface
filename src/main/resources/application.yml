@@ -1,7 +1,11 @@
 server:
   port: 8771
-#  servlet:
-#    context-path: /register
+  #  servlet:
+  #    context-path: /register
+  compression:
+    enabled: true
+    mime-types: text/html,text/xml,text/plain,text/css,text/javascript,application/javascript,application/json
+    min-response-size: 2048
 
 logging:
   level:
@@ -12,7 +16,7 @@ logging:
 spring:
   data:
     redis:
-#      host: 192.168.109.222
+      #      host: 192.168.109.222
       host: 127.0.0.1
       port: 6379
       password: LUIcYikvVg6i4pV
@@ -39,10 +43,10 @@ spring:
           username: XH
           password: Passw0rd
           driver-class-name: com.microsoft.sqlserver.jdbc.SQLServerDriver
-#    jpa:
-#      hibernate:
-#        ddl-auto: update
-#      show-sql: true
+  #    jpa:
+  #      hibernate:
+  #        ddl-auto: update
+  #      show-sql: true
   mvc:
     static-path-pattern: /static/**
   thymeleaf:

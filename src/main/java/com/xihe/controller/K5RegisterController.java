@@ -84,13 +84,49 @@ public class K5RegisterController {
 
     @Operation(summary = "同步第三方订单")
     @PostMapping(value = "/synchronizeOrder")
-    public Result<JSONArray> synchronizeOrder(String requestToken, String timeDate) {
-        return Result.success(thirdService.synchronizeOrder(requestToken, timeDate));
+    public Result<JSONArray> synchronizeOrder(String requestToken, int type, String startTime, String endTime) {
+        return Result.success(thirdService.synchronizeOrder(requestToken, type, startTime, endTime));
+    }
+
+    @Operation(summary = "同步第三方接口")
+    @PostMapping(value = "/synchronizeOrderInter")
+    public Result<JSONArray> synchronizeOrder(String requestToken) {
+        return Result.success(thirdService.synchronizeOrder(requestToken));
+    }
+
+    @Operation(summary = "同步运单状态")
+    @PostMapping(value = "/synchronizeBill")
+    public Result<JSONArray> synchronizeBill(String requestToken, String startTime, String endTime) {
+        return Result.success(thirdService.synchronizeBill(requestToken, startTime, endTime));
     }
 
     @Operation(summary = "同步K5客户等级")
     @PostMapping(value = "/synchronizeClientLevel")
     public Result<JSONArray> synchronizeClientLevel(String requestToken) {
         return Result.success(thirdService.synchronizeClientLevel(requestToken));
+    }
+
+    @Operation(summary = "获取K5所有的客户附件")
+    @PostMapping(value = "/getAllClientAttach")
+    public Result<JSONArray> getAllClientAttach(String requestToken) {
+        return Result.success(thirdService.getAllClientAttach(requestToken));
+    }
+
+    @Operation(summary = "K5上传客户附件")
+    @PostMapping(value = "/addClientAttach")
+    public Result<Integer> addClientAttach(String requestToken, String attachArr) {
+        return Result.success(thirdService.addClientAttach(requestToken, attachArr));
+    }
+
+    @Operation(summary = "K5修改客户附件")
+    @PostMapping(value = "/updateClientAttach")
+    public Result<Integer> updateClientAttach(String requestToken, String attachArr) {
+        return Result.success(thirdService.updateClientAttach(requestToken, attachArr));
+    }
+
+    @Operation(summary = "K5删除客户附件")
+    @PostMapping(value = "/deleteClientAttach")
+    public Result<Integer> deleteClientAttach(String requestToken, String attachArr) {
+        return Result.success(thirdService.deleteClientAttach(requestToken, attachArr));
     }
 }

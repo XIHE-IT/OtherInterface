@@ -12,6 +12,9 @@ public class ChannelInfo {
     @Schema(description = "渠道代码")
     private String channelid;
 
+    @Schema(description = "渠道编码")
+    private String channelCode;
+
     @Schema(description = "渠道名称")
     private String channelname;
 
